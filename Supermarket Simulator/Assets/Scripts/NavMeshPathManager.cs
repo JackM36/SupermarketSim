@@ -3,20 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public class NavMeshPathRequestManager : MonoBehaviour 
+public class NavMeshPathManager : MonoBehaviour 
 {
     Queue<PathRequest> pathRequests = new Queue<PathRequest>();
     PathRequest currentRequest;
     bool isProcessingPath;
 
-    static NavMeshPathRequestManager instance;
-    NavMeshPathFinding pathFinder;
+    static NavMeshPathManager instance;
+    static NavMeshPathFinding pathFinder;
+    static NavMesh navMesh;
 
     void Awake()
     {
         // Get Components
         instance = this;
         pathFinder = GetComponent<NavMeshPathFinding>();
+        navMesh = GetComponent<NavMesh>();
     }
 
     struct PathRequest
@@ -43,6 +45,12 @@ public class NavMeshPathRequestManager : MonoBehaviour
         instance.pathRequests.Enqueue(request);
 
         instance.processNextRequest();
+    }
+
+    public static void removeUsedNodePenalty(Vector3 nodePos)
+    {
+        // remove the penalty that was added by the agent for using this node
+        navMesh.getNode(nodePos).usedPenalty -= pathFinder.usedNodeCost;
     }
 
     void processNextRequest()

@@ -8,15 +8,16 @@ public class NavMeshPathFinding : MonoBehaviour
     [Header("Move Costs")]
     public int straightMoveCost = 10;
     public int diagonalMoveCost = 14;
+    public int usedNodeCost = 1;
 
     NavMesh navMesh;
-    NavMeshPathRequestManager pathRequestManager;
+    NavMeshPathManager pathManager;
 
 	void Awake () 
     {
 	    // Get components
         navMesh = GetComponent<NavMesh>();
-        pathRequestManager = GetComponent<NavMeshPathRequestManager>();
+        pathManager = GetComponent<NavMeshPathManager>();
 	}
 
     public void getPath(Vector3 startPos, Vector3 targetPos)
@@ -116,7 +117,7 @@ public class NavMeshPathFinding : MonoBehaviour
         }
 
         // Let the request manager know the path was processed, and pass the path
-        pathRequestManager.finishedProcessingPath(path, foundPath);
+        pathManager.finishedProcessingPath(path, foundPath);
     }
 
     Vector3[] vectorizePath(List<NavMeshNode> path)
@@ -147,10 +148,22 @@ public class NavMeshPathFinding : MonoBehaviour
         // Reverse the list because the path was stored from target to start.
         path.Reverse();
 
+        // penalize all nodes of this path because they are being used by the agent that will follow this path
+        // This will make agents take slightly different paths to avoid overused paths
+        penalizePath(path);
+
         // Convert path to vector positions instead of node objects
         Vector3[] vectorPath = vectorizePath(path);
 
         return vectorPath;
+    }
+
+    void penalizePath(List<NavMeshNode> path)
+    {
+        for (int i = 0; i < path.Count; i++)
+        {
+            path[i].usedPenalty += usedNodeCost;
+        }
     }
 
     int getGridDistance(NavMeshNode nodeA, NavMeshNode nodeB)

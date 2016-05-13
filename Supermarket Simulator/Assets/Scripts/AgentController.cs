@@ -25,6 +25,8 @@ public class AgentController : MonoBehaviour
     float inputH;
 
     int currentWaypoint;
+    bool onPath = false;
+    bool requestedPath = false;
 
     void Awake() 
     {
@@ -32,12 +34,15 @@ public class AgentController : MonoBehaviour
 	
 	void Update () 
     {
-        if (path.Length == 0)
+        // If the agent does not have a path yet, request one
+        if (!onPath && !requestedPath)
         {
             // Make a request for a new path
-            NavMeshPathRequestManager.requestPath(transform.position, target.position, onPathFound);
+            NavMeshPathManager.requestPath(transform.position, target.position, onPathRequestProcessed);
+            requestedPath = true;
         }
 
+        // If current target/waypoint has been reached, go to the next one
         if (currentWaypoint < path.Length)
         {
             moveToTarget();
@@ -48,8 +53,8 @@ public class AgentController : MonoBehaviour
     void moveToTarget()
     {
         //Look at and dampen the rotation
-        Vector3 test = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
-        turnRotation = Quaternion.LookRotation(test - transform.position);
+        Vector3 LookPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
+        turnRotation = Quaternion.LookRotation(LookPos - transform.position);
         transform.rotation = Quaternion.Slerp(transform.rotation, turnRotation, Time.deltaTime * turnSpeed);
 
         // Move unit towards the next waypoint
@@ -58,36 +63,64 @@ public class AgentController : MonoBehaviour
         // If the unit is close enough to the currentWaypoint, register it as reached
         if (Vector3.Distance(transform.position, path[currentWaypoint]) < targetMaxDistance)
         {
+            // node is already reached, so remove penalty for using this node
+            NavMeshPathManager.removeUsedNodePenalty(path[currentWaypoint]);
+
+            // Check if agent reached its final target
+            if (currentWaypoint == path.Length-1)
+            {
+                onPath = false;
+                return;
+            }
+
             currentWaypoint++;
         }
     }
 
-    public void onPathFound(Vector3[] newPath, bool foundPath)
+    public void onPathRequestProcessed(Vector3[] newPath, bool foundPath)
     {
         // When a path was found, set the recieved path as the new path
         if (foundPath)
         {
             path = newPath;
             currentWaypoint = 0;
+            onPath = true;
+            requestedPath = false;
         }
     }
 
-    private void OnDrawGizmosSelected() 
+    void OnDrawGizmosSelected() 
     {
         // Draw sightRadius Gizmos
         Gizmos.color = gizmoRadiusColor;
         Gizmos.DrawWireSphere (transform.position, sightRadius);
+    }
 
+    void OnDrawGizmos()
+    {
         // Draw path lines
         Gizmos.color = gizmoPathColor;
-        if (path != null && path.Length > 0)
+        if (onPath && path.Length > 0)
         {
-            for (int i = 0; i < path.Length-1; i++)
+            // Draw line from it self node to next node
+            Vector3 startPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
+            Gizmos.DrawLine(transform.position, startPos);
+
+            for (int i = currentWaypoint; i < path.Length-1; i++)
             {
-                Vector3 startPos = new Vector3(path[i].x, transform.position.y, path[i].z);
-                Vector3 endPos = new Vector3(path[i+1].x, transform.position.y, path[i+1].z);
-                Gizmos.DrawLine(startPos, endPos);
+                Vector3 pos1 = new Vector3(path[i].x, transform.position.y, path[i].z);
+                Vector3 pos2 = new Vector3(path[i+1].x, transform.position.y, path[i+1].z);
+
+                // Draw a sphere on the node
+                Gizmos.DrawSphere(pos1, 0.2f);
+
+                // Draw line from start node to end node
+                Gizmos.DrawLine(pos1, pos2);
             }
+
+            // Draw a sphere on the last node of path
+            Vector3 nodePos = new Vector3(path[path.Length-1].x, path[path.Length-1].y, path[path.Length-1].z);
+            Gizmos.DrawSphere(nodePos, 0);
         }
     }
 }

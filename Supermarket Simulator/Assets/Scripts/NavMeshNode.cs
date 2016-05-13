@@ -9,6 +9,7 @@ public class NavMeshNode: IHeapItem<NavMeshNode>
 
     public int gCost;
     public int hCost;
+    public int usedPenalty;
 
     public NavMeshNode parent;
 
@@ -19,13 +20,14 @@ public class NavMeshNode: IHeapItem<NavMeshNode>
         this.walkable = walkable;
         this.position = position;
         this.gridPos = gridPos;
+        this.usedPenalty = 0;
     }
 
     public int fCost
     {
         get
         {
-            return gCost + hCost;
+            return gCost + hCost + usedPenalty;
         }
     }
 
