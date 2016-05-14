@@ -27,7 +27,6 @@ public class NavMeshPathFinding : MonoBehaviour
 	
     IEnumerator findPath(Vector3 startPos, Vector3 targetPos)
     {
-        Vector3[] path = new Vector3[0];
         bool foundPath = false;
 
         // Get start and target nodes
@@ -111,13 +110,26 @@ public class NavMeshPathFinding : MonoBehaviour
         //wait one frame
         yield return null;
 
+        List<NavMeshNode> path = new List<NavMeshNode>();
+        Vector3[] vectorPath = new Vector3[0];
+
         if (foundPath)
         {
+            // Trace the found path
             path = tracePath(startNode, targetNode);
+
+            path = smoothPath(path);
+
+            // penalize all nodes of this path because they are being used by the agent that will follow this path
+            // This will make agents take slightly different paths to avoid overused paths
+            penalizePath(path);
+
+            // Convert path to vector positions instead of node objects
+            vectorPath = vectorizePath(path);
         }
 
         // Let the request manager know the path was processed, and pass the path
-        pathManager.finishedProcessingPath(path, foundPath);
+        pathManager.finishedProcessingPath(vectorPath, foundPath);
     }
 
     Vector3[] vectorizePath(List<NavMeshNode> path)
@@ -131,7 +143,7 @@ public class NavMeshPathFinding : MonoBehaviour
         return vectorPath;
     }
 
-    Vector3[] tracePath(NavMeshNode startNode, NavMeshNode targetNode)
+    List<NavMeshNode> tracePath(NavMeshNode startNode, NavMeshNode targetNode)
     {
         List<NavMeshNode> path = new List<NavMeshNode>();
 
@@ -148,14 +160,41 @@ public class NavMeshPathFinding : MonoBehaviour
         // Reverse the list because the path was stored from target to start.
         path.Reverse();
 
-        // penalize all nodes of this path because they are being used by the agent that will follow this path
-        // This will make agents take slightly different paths to avoid overused paths
-        penalizePath(path);
+        return path;
+    }
 
-        // Convert path to vector positions instead of node objects
-        Vector3[] vectorPath = vectorizePath(path);
+    List<NavMeshNode> smoothPath(List<NavMeshNode> path)
+    {
+        List<NavMeshNode> smoothPath = new List<NavMeshNode>();
+        int lastVisibleNodeIndex = 0;
 
-        return vectorPath;
+        // Add the first node
+        smoothPath.Add(path[0]);
+
+        // For each node, check if all other nodes onwards are visible (exclude those that are later decided not to be included in path)
+        for (int i = 0; i < path.Count-1; i+=(lastVisibleNodeIndex-i))
+        {
+            for (int j = i+1; j < path.Count; j++)
+            {
+                // shoot a linecast from node a to b to determine if b is visible to a
+                if (Physics.Linecast(path[i].position, path[j].position))
+                {
+                    // If there is a hit, it is not visible. Therefore add the last visible one to the list
+                    smoothPath.Add(path[lastVisibleNodeIndex]);
+                    break;
+                }
+                else
+                {
+                    // Mark it as the last visible node
+                    lastVisibleNodeIndex = j;
+                }
+            }
+        }
+
+        // Always add the last(target) node to the list
+        smoothPath.Add(path[path.Count-1]);
+            
+        return smoothPath;
     }
 
     void penalizePath(List<NavMeshNode> path)
