@@ -18,8 +18,10 @@ public class NavMesh : MonoBehaviour
 
     NavMeshNode[,] grid;
     float nodeDiameter;
-    int gridSizeX;
-    int gridSizeY;
+    [HideInInspector]
+    public int gridSizeX;
+    [HideInInspector]
+    public int gridSizeY;
 
     public int gridMaxSize
     {

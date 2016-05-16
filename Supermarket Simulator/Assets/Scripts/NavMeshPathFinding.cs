@@ -118,7 +118,8 @@ public class NavMeshPathFinding : MonoBehaviour
             // Trace the found path
             path = tracePath(startNode, targetNode);
 
-            path = smoothPath(path);
+            // Smooth the path
+            //path = smoothPath(path);
 
             // penalize all nodes of this path because they are being used by the agent that will follow this path
             // This will make agents take slightly different paths to avoid overused paths

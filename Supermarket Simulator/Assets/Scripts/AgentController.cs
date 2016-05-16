@@ -5,8 +5,11 @@ using System.Diagnostics;
 
 public class AgentController : MonoBehaviour 
 {
-    public float moveSpeed = 5f;
-    public float turnSpeed = 3.0f;
+    [Header("Movement")]
+    public float maxSpeed = 3f;
+    public float maxSteer = 0.1f;
+
+    [Header("Perception")]
     public float sightRadius = 5f;
 
     public Transform target;
@@ -21,18 +24,26 @@ public class AgentController : MonoBehaviour
     public Color gizmoPathColor = Color.green;
 
     Quaternion turnRotation;
-    float inputV;
-    float inputH;
+    Vector3 lastPos;
+    Vector3 currentVelocity;
 
     int currentWaypoint;
     bool onPath = false;
     bool requestedPath = false;
 
+    Rigidbody rb;
+
     void Awake() 
     {
+        // Get components
+        rb = GetComponent<Rigidbody>();
+
+        // initializations
+        lastPos = transform.position;
+        currentVelocity = Vector3.zero;
 	}
 	
-	void Update () 
+	void FixedUpdate () 
     {
         // If the agent does not have a path yet, request one
         if (!onPath && !requestedPath)
@@ -48,17 +59,72 @@ public class AgentController : MonoBehaviour
             moveToTarget();
         }
 
+        // Calculate current velocity and set last position of agent
+        currentVelocity = (transform.position - lastPos) / Time.fixedDeltaTime;
+        lastPos = transform.position;
 	}
 
     void moveToTarget()
     {
+        // get position of current waypoint
+        Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
+
+        // Get required steerforce
+        Vector3 steerForce = seek(targetPos);
+
+        // Add steerforce to the velocity vector
+        rb.velocity += steerForce;
+
+        // Rotate to look towards new current velocity
+        Vector3 lookVector = removeVectorY(rb.velocity);
+        transform.rotation = Quaternion.LookRotation(lookVector);
+
+        // If the unit is close enough to the currentWaypoint, register it as reached
+        if (Vector3.Distance(transform.position, targetPos) < targetMaxDistance)
+        {
+            // node is already reached, so remove penalty for using this node
+            NavMeshPathManager.removeUsedNodePenalty(path[currentWaypoint]);
+
+            // Check if agent reached its final target
+            if (currentWaypoint == path.Length-1)
+            {
+                onPath = false;
+                return;
+            }
+
+            currentWaypoint++;
+        }
+    }
+
+    Vector3 seek(Vector3 targetPos)
+    {
+        // velocity vector towards target
+        Vector3 desiredVelocity = (targetPos - transform.position).normalized * maxSpeed;
+
+        // calculate the steerforce required for the desired velocity based on current velocity
+        Vector3 steerForce = desiredVelocity - rb.velocity;
+        steerForce = removeVectorY(steerForce);
+
+        // clamp it to the maximum steer
+        //steerForce = Vector3.ClampMagnitude(steerForce, maxSteer);
+
+        return steerForce;
+    }
+
+    Vector3 removeVectorY(Vector3 vector)
+    {
+        return new Vector3(vector.x, 0, vector.z);
+    }
+
+    void moveToTarget2()
+    {
         //Look at and dampen the rotation
         Vector3 LookPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
         turnRotation = Quaternion.LookRotation(LookPos - transform.position);
-        transform.rotation = Quaternion.Slerp(transform.rotation, turnRotation, Time.deltaTime * turnSpeed);
+        //transform.rotation = Quaternion.Slerp(transform.rotation, turnRotation, Time.deltaTime * turnSpeed);
 
         // Move unit towards the next waypoint
-        transform.position += transform.forward * Time.fixedDeltaTime * moveSpeed;
+        transform.position += transform.forward * Time.fixedDeltaTime * maxSpeed;
 
         // If the unit is close enough to the currentWaypoint, register it as reached
         if (Vector3.Distance(transform.position, path[currentWaypoint]) < targetMaxDistance)
@@ -104,7 +170,7 @@ public class AgentController : MonoBehaviour
         {
             // Draw line from it self node to next node
             Vector3 startPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
-            Gizmos.DrawLine(transform.position, startPos);
+            //Gizmos.DrawLine(transform.position, startPos);
 
             for (int i = currentWaypoint; i < path.Length-1; i++)
             {
