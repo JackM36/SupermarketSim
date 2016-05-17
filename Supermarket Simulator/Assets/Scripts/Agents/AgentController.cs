@@ -3,19 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+[RequireComponent(typeof(Rigidbody))]
 public class AgentController : MonoBehaviour 
 {
     public Transform target;
-
-    [Header("Movement")]
-    public float maxSpeed;
-    public float maxSteer;
-
-    [Header("Perception")]
-    public float sightRadius = 5f;
-
-    [Header("Distances")]
-    public float slowDownRadius;
 
     [Header("Path Finding")]
     [HideInInspector]
@@ -76,9 +67,9 @@ public class AgentController : MonoBehaviour
             {
                 steeringBehaviours.Add(SteeringBehaviours.Behaviour.seek);
             }
+            //steeringBehaviours.Add(SteeringBehaviours.Behaviour.seperate);
 
             move(steeringBehaviours);
-            print(rb.velocity.magnitude);
         }
 	}
 
@@ -155,16 +146,6 @@ public class AgentController : MonoBehaviour
         }
     }
 
-    void OnDrawGizmosSelected() 
-    {
-        if (showSightRadiusGizmo)
-        {
-            // Draw sightRadius Gizmos
-            Gizmos.color = gizmoSightRadiusColor;
-            Gizmos.DrawWireSphere(transform.position, sightRadius);
-        }
-    }
-
     void OnDrawGizmos()
     {
         if (showPathGizmo)
@@ -193,6 +174,16 @@ public class AgentController : MonoBehaviour
                 Vector3 nodePos = new Vector3(path[path.Length - 1].x, path[path.Length - 1].y, path[path.Length - 1].z);
                 Gizmos.DrawSphere(nodePos, 0);
             }
+        }
+    }
+
+    void OnDrawGizmosSelected() 
+    {
+        if (Application.isPlaying && showSightRadiusGizmo)
+        {
+            // Draw sightRadius Gizmos
+            Gizmos.color = gizmoSightRadiusColor;
+            Gizmos.DrawWireSphere(transform.position, steering.sightRadius);
         }
     }
 }
