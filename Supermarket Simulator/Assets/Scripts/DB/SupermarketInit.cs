@@ -37,7 +37,7 @@ public class SupermarketInit : MonoBehaviour {
             for (int i = 0; i < data.Count; i++)
             {
                 // generate customers
-                GameObject customer = (GameObject)Instantiate(customers[Random.Range(0,3)], new Vector3(0,0,0), Quaternion.identity);
+                GameObject customer = (GameObject)Instantiate(customers[Random.Range(0,customers.Count)], new Vector3(0,0,0), Quaternion.identity);
 
                 // target position
                 customer.GetComponent<CustomerController>().target = GameObject.Find("Target").transform;
