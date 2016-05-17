@@ -5,20 +5,22 @@ using System.Diagnostics;
 
 public class AgentController : MonoBehaviour 
 {
+    public Transform target;
+
     [Header("Movement")]
-    public float maxSpeed = 3f;
-    public float maxSteer = 0.1f;
+    public float maxSpeed;
+    public float maxSteer;
 
     [Header("Perception")]
     public float sightRadius = 5f;
-    public float slowDownRadius = 5f;
 
-    public Transform target;
+    [Header("Distances")]
+    public float slowDownRadius;
 
     [Header("Path Finding")]
     [HideInInspector]
     public Vector3[] path;
-    public float targetMaxDistance = 1;
+    public float reachedTargetRadius = 1;
 
     [Header("Editor Visuals")]
     public bool showSightRadiusGizmo = true;
@@ -32,14 +34,19 @@ public class AgentController : MonoBehaviour
     bool onPath = false;
     bool requestedPath = false;
 
-    Rigidbody rb;
+    [HideInInspector]
+    public Rigidbody rb;
+    SteeringBehaviours steering;
+    List<SteeringBehaviours.Behaviour> steeringBehaviours;
 
     void Awake() 
     {
         // Get components
         rb = GetComponent<Rigidbody>();
+        steering = GetComponent<SteeringBehaviours>();
 
         // initializations
+        steeringBehaviours = new List<SteeringBehaviours.Behaviour>();
         lastVelocity = Vector3.zero;
 	}
 	
@@ -56,28 +63,42 @@ public class AgentController : MonoBehaviour
         // If current target/waypoint has been reached, go to the next one
         if (currentWaypoint < path.Length)
         {
-            moveToTarget();
+            // Clear previous behaviours
+            steeringBehaviours.Clear();
+
+            // Add the required steering behaviours
+            // If heading towards the last waypoint, then use arrive instead of seek
+            if (currentWaypoint == path.Length - 1)
+            {
+                steeringBehaviours.Add(SteeringBehaviours.Behaviour.arrive);
+            }
+            else
+            {
+                steeringBehaviours.Add(SteeringBehaviours.Behaviour.seek);
+            }
+
+            move(steeringBehaviours);
+            print(rb.velocity.magnitude);
         }
 	}
 
-    void moveToTarget()
+    void move(List<SteeringBehaviours.Behaviour> steeringBehaviours)
     {
         // get position of current waypoint
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
         // Get required steerforce
-        Vector3 steerForce = seekAndArrive(targetPos, target.position);
+        Vector3 steerForce = steering.performSteering(targetPos, steeringBehaviours);
 
         // Add steerforce to the velocity vector
         rb.velocity = lastVelocity + steerForce;
         lastVelocity = rb.velocity;
 
         // Rotate to look towards new current velocity
-        Vector3 lookVector = removeVectorY(rb.velocity);
-        transform.rotation = Quaternion.LookRotation(lookVector);
+        transform.rotation = steering.lookTowardsVelocity();
 
         // If the unit is close enough to the currentWaypoint, register it as reached
-        if (Vector3.Distance(transform.position, targetPos) < targetMaxDistance)
+        if (Vector3.Distance(transform.position, targetPos) < reachedTargetRadius)
         {
             // node is already reached, so remove penalty for using this node
             NavMeshPathManager.removeUsedNodePenalty(path[currentWaypoint]);
@@ -93,68 +114,19 @@ public class AgentController : MonoBehaviour
         }
     }
 
-    Vector3 seek(Vector3 targetPos)
-    {
-        // velocity vector towards target
-        Vector3 desiredVelocity = (targetPos - transform.position).normalized * maxSpeed;
-
-        // calculate the steerforce required for the desired velocity based on current velocity
-        Vector3 steerForce = desiredVelocity - rb.velocity;
-        steerForce = removeVectorY(steerForce);
-
-        // clamp it to the maximum steer
-        steerForce = Vector3.ClampMagnitude(steerForce, maxSteer);
-
-        return steerForce;
-    }
-
-    Vector3 seekAndArrive(Vector3 targetPos, Vector3 finalTargetPos)
-    {
-        float distance = Mathf.Abs(Vector3.Distance(transform.position, finalTargetPos));
-        float speed;
-
-        // check if it should start slowing down
-        if (distance <= slowDownRadius)
-        {
-            // Calculate the speed it should have in order to arrive correctly at destination.
-            // When in the slow down radius, it start slowing down more the closest it is to target.
-            speed = (distance * maxSpeed) / slowDownRadius;
-        }
-        else
-        {
-            speed = maxSpeed;
-        }
-
-        // velocity vector towards target
-        Vector3 desiredVelocity = (targetPos - transform.position).normalized * speed;
-
-        // calculate the steerforce required for the desired velocity based on current velocity
-        Vector3 steerForce = desiredVelocity - rb.velocity;
-        steerForce = removeVectorY(steerForce);
-
-        // clamp it to the maximum steer
-        steerForce = Vector3.ClampMagnitude(steerForce, maxSteer);
-
-        return steerForce;
-    }
-
-    Vector3 removeVectorY(Vector3 vector)
-    {
-        return new Vector3(vector.x, 0, vector.z);
-    }
-
+    /*
     void moveToTarget2()
     {
         //Look at and dampen the rotation
         Vector3 LookPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
         //turnRotation = Quaternion.LookRotation(LookPos - transform.position);
-        //transform.rotation = Quaternion.Slerp(transform.rotation, turnRotation, Time.deltaTime * turnSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, turnRotation, Time.deltaTime * turnSpeed);
 
         // Move unit towards the next waypoint
         transform.position += transform.forward * Time.fixedDeltaTime * maxSpeed;
 
         // If the unit is close enough to the currentWaypoint, register it as reached
-        if (Vector3.Distance(transform.position, path[currentWaypoint]) < targetMaxDistance)
+        if (Vector3.Distance(transform.position, path[currentWaypoint]) < reachedTargetRadius)
         {
             // node is already reached, so remove penalty for using this node
             NavMeshPathManager.removeUsedNodePenalty(path[currentWaypoint]);
@@ -169,6 +141,7 @@ public class AgentController : MonoBehaviour
             currentWaypoint++;
         }
     }
+    */
 
     public void onPathRequestProcessed(Vector3[] newPath, bool foundPath)
     {
