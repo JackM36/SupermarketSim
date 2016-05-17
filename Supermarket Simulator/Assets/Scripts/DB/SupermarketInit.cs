@@ -5,9 +5,10 @@ using LitJson;
 public class SupermarketInit : MonoBehaviour {
 
     Item[] items;
-    public List<GameObject> customers;
+    public int customerNumber;
+    public List<GameObject> customerModels;
     string customerData;
-    JsonData data;
+    JsonData data; 
 
 	// Use this for initialization
 	void Start () {
@@ -33,11 +34,13 @@ public class SupermarketInit : MonoBehaviour {
         {
             customerData = System.IO.File.ReadAllText("Assets/Files/data.json");
             data = JsonMapper.ToObject(customerData);
+            GameObject customers = new GameObject("Customers");
 
-            for (int i = 0; i < data.Count; i++)
+            for (int i = 0; i < customerNumber; i++)
             {
                 // generate customers
-                GameObject customer = (GameObject)Instantiate(customers[Random.Range(0,customers.Count)], new Vector3(0,0,0), Quaternion.identity);
+                GameObject customer = (GameObject)Instantiate(customerModels[Random.Range(0, customerModels.Count)], new Vector3(0,0,0), Quaternion.identity);
+                customer.transform.parent = customers.transform;
 
                 // target position
                 customer.GetComponent<CustomerController>().target = GameObject.Find("Target").transform;
@@ -47,7 +50,7 @@ public class SupermarketInit : MonoBehaviour {
                 customer.GetComponent<CustomerController>().maxSpeed = float.Parse(data[i]["mSpeed"].ToString());
                 customer.GetComponent<CustomerController>().maxSteer = float.Parse(data[i]["mSteer"].ToString());
                 customer.GetComponent<CustomerController>().sightRadius = float.Parse(data[i]["sRadius"].ToString());
-                //customer.GetComponent<CustomerController>().slowDownRadius = float.Parse(data[i]["sDownRadius"].ToString());
+                customer.GetComponent<CustomerController>().slowDownRadius = float.Parse(data[i]["sDownRadius"].ToString());
                 customer.GetComponent<CustomerController>().targetMaxDistance = float.Parse(data[i]["tMaxDistance"].ToString());
                 customer.GetComponent<CustomerController>().budget = float.Parse(data[i]["budget"].ToString()); 
 
