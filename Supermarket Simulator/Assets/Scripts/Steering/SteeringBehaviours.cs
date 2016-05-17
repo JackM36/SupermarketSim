@@ -11,15 +11,21 @@ public class SteeringBehaviours : MonoBehaviour
 
     [Header("Perception")]
     public float sightRadius = 5f;
+    public LayerMask AgentsLayers;
 
     [Header("Distances")]
     public float slowDownRadius;
+
+    [Header("Priorities")]
+    float seekPriority = 1;
+    float arrivePriority = 1;
+    float separatePriority = 1;
 
     public enum Behaviour
     {
         seek,
         arrive,
-        seperate
+        separate
     }
 
     AgentController agent;
@@ -38,7 +44,7 @@ public class SteeringBehaviours : MonoBehaviour
         agent = GetComponent<AgentController>();
     }
 
-    public Vector3 performSteering(Vector3 targetPos, List<Behaviour> behaviours)
+    public Vector3 performSteering(List<Behaviour> behaviours, Vector3 targetPos, Vector3 finalTargetPos)
     {
         Vector3 steerForce = Vector3.zero;
 
@@ -49,13 +55,19 @@ public class SteeringBehaviours : MonoBehaviour
                 steerForce += seek(targetPos);
             
             if (behaviours[i] == Behaviour.arrive)
-                steerForce += arrive(targetPos);
-            if (behaviours[i] == Behaviour.seperate)
-                steerForce += seperate(targetPos);
+                steerForce += arrive(finalTargetPos);
+            if (behaviours[i] == Behaviour.separate)
+                steerForce += separate(targetPos);
         }
 
         // Return the average of the summed forces
         return (steerForce / behaviours.Count);
+    }
+
+    public Vector3 performSteering(List<Behaviour> behaviours, Vector3 targetPos)
+    {
+        Vector3 finalTargetPos = targetPos;
+        return performSteering(behaviours, targetPos, finalTargetPos);
     }
 
     Vector3 seek(Vector3 targetPos)
@@ -73,9 +85,9 @@ public class SteeringBehaviours : MonoBehaviour
         return steerForce;
     }
 
-    Vector3 arrive(Vector3 targetPos)
+    Vector3 arrive(Vector3 finalTargetPos)
     {
-        float distance = Mathf.Abs(Vector3.Distance(transform.position, targetPos));
+        float distance = Mathf.Abs(Vector3.Distance(transform.position, finalTargetPos));
         float speed;
 
         // check if it should start slowing down
@@ -91,7 +103,7 @@ public class SteeringBehaviours : MonoBehaviour
         }
 
         // velocity vector towards target
-        Vector3 desiredVelocity = (targetPos - transform.position).normalized * speed;
+        Vector3 desiredVelocity = (finalTargetPos - transform.position).normalized * speed;
 
         // calculate the steerforce required for the desired velocity based on current velocity
         Vector3 steerForce = desiredVelocity - currentVelocity;
@@ -103,18 +115,23 @@ public class SteeringBehaviours : MonoBehaviour
         return steerForce;
     }
 
-    Vector3 seperate(Vector3 targetPos)
+    Vector3 separate(Vector3 targetPos)
     {
         Vector3  velocitiesSum = targetPos - transform.position;
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, sightRadius);
+        // Get all agents in sight of this agent, and go through all of them
+        Collider[] hits = Physics.OverlapSphere(transform.position, sightRadius, AgentsLayers);
         for(int i=0; i < hits.Length; i++)
         {
+            // Get the distance from them, and the distance difference vector
             float distance = Vector3.Distance(transform.position, hits[i].transform.position);
             Vector3 distanceVector = (transform.position - hits[i].transform.position).normalized;
+
+            // Add the distance difference vector to the velocities sum
             velocitiesSum += distanceVector;
         }
 
+        // Take the sum of those velocities and scale by the maxSpeed
         Vector3 desiredVelocity = (velocitiesSum / (hits.Length+1)) * maxSpeed;
 
         // calculate the steerforce required for the desired velocity based on current velocity

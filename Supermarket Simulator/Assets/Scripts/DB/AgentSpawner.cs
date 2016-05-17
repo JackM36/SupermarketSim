@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using LitJson;
 
-public class SupermarketInit : MonoBehaviour {
+public class AgentSpawner : MonoBehaviour 
+{
+    [Header("Customers")]
+    public int customersNumber;
+    public List<GameObject> customerModels;
 
     Item[] items;
-    public int customerNumber;
-    public List<GameObject> customerModels;
     string customerData;
     JsonData data; 
 
@@ -34,13 +36,13 @@ public class SupermarketInit : MonoBehaviour {
         {
             customerData = System.IO.File.ReadAllText("Assets/Files/data.json");
             data = JsonMapper.ToObject(customerData);
-            GameObject customers = new GameObject("Customers");
+            GameObject customersPlaceholder = new GameObject("Customers");
 
-            for (int i = 0; i < customerNumber; i++)
+            for (int i = 0; i < customersNumber; i++)
             {
                 // generate customers
                 GameObject customer = (GameObject)Instantiate(customerModels[Random.Range(0, customerModels.Count)], new Vector3(0,0,0), Quaternion.identity);
-                customer.transform.parent = customers.transform;
+                customer.transform.parent = customersPlaceholder.transform;
 
                 // target position
                 customer.GetComponent<CustomerController>().target = GameObject.Find("Target").transform;
@@ -90,7 +92,7 @@ public class SupermarketInit : MonoBehaviour {
         }
         catch (System.IO.FileNotFoundException)
         {
-            Debug.Log("File Not Found");
+            Debug.LogError("Agent Spawner failed: Customers JSON file not found!");
         }
         
 	}

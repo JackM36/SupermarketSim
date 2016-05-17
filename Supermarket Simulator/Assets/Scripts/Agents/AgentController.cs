@@ -67,7 +67,7 @@ public class AgentController : MonoBehaviour
             {
                 steeringBehaviours.Add(SteeringBehaviours.Behaviour.seek);
             }
-            //steeringBehaviours.Add(SteeringBehaviours.Behaviour.seperate);
+            steeringBehaviours.Add(SteeringBehaviours.Behaviour.separate);
 
             move(steeringBehaviours);
         }
@@ -79,7 +79,7 @@ public class AgentController : MonoBehaviour
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
         // Get required steerforce
-        Vector3 steerForce = steering.performSteering(targetPos, steeringBehaviours);
+        Vector3 steerForce = steering.performSteering(steeringBehaviours, targetPos, target.position);
 
         // Add steerforce to the velocity vector
         rb.velocity = lastVelocity + steerForce;
