@@ -11,6 +11,7 @@ public class AgentController : MonoBehaviour
 
     [Header("Perception")]
     public float sightRadius = 5f;
+    public float slowDownRadius = 5f;
 
     public Transform target;
 
@@ -20,10 +21,11 @@ public class AgentController : MonoBehaviour
     public float targetMaxDistance = 1;
 
     [Header("Editor Visuals")]
-    public Color gizmoRadiusColor = Color.red;
+    public bool showSightRadiusGizmo = true;
+    public Color gizmoSightRadiusColor = Color.red;
+    public bool showPathGizmo = true;
     public Color gizmoPathColor = Color.green;
 
-    Quaternion turnRotation;
     Vector3 lastVelocity;
 
     int currentWaypoint;
@@ -64,7 +66,7 @@ public class AgentController : MonoBehaviour
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
         // Get required steerforce
-        Vector3 steerForce = seek(targetPos);
+        Vector3 steerForce = seekAndArrive(targetPos, target.position);
 
         // Add steerforce to the velocity vector
         rb.velocity = lastVelocity + steerForce;
@@ -106,6 +108,36 @@ public class AgentController : MonoBehaviour
         return steerForce;
     }
 
+    Vector3 seekAndArrive(Vector3 targetPos, Vector3 finalTargetPos)
+    {
+        float distance = Mathf.Abs(Vector3.Distance(transform.position, finalTargetPos));
+        float speed;
+
+        // check if it should start slowing down
+        if (distance <= slowDownRadius)
+        {
+            // Calculate the speed it should have in order to arrive correctly at destination.
+            // When in the slow down radius, it start slowing down more the closest it is to target.
+            speed = (distance * maxSpeed) / slowDownRadius;
+        }
+        else
+        {
+            speed = maxSpeed;
+        }
+
+        // velocity vector towards target
+        Vector3 desiredVelocity = (targetPos - transform.position).normalized * speed;
+
+        // calculate the steerforce required for the desired velocity based on current velocity
+        Vector3 steerForce = desiredVelocity - rb.velocity;
+        steerForce = removeVectorY(steerForce);
+
+        // clamp it to the maximum steer
+        steerForce = Vector3.ClampMagnitude(steerForce, maxSteer);
+
+        return steerForce;
+    }
+
     Vector3 removeVectorY(Vector3 vector)
     {
         return new Vector3(vector.x, 0, vector.z);
@@ -115,7 +147,7 @@ public class AgentController : MonoBehaviour
     {
         //Look at and dampen the rotation
         Vector3 LookPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
-        turnRotation = Quaternion.LookRotation(LookPos - transform.position);
+        //turnRotation = Quaternion.LookRotation(LookPos - transform.position);
         //transform.rotation = Quaternion.Slerp(transform.rotation, turnRotation, Time.deltaTime * turnSpeed);
 
         // Move unit towards the next waypoint
@@ -152,36 +184,42 @@ public class AgentController : MonoBehaviour
 
     void OnDrawGizmosSelected() 
     {
-        // Draw sightRadius Gizmos
-        Gizmos.color = gizmoRadiusColor;
-        Gizmos.DrawWireSphere (transform.position, sightRadius);
+        if (showSightRadiusGizmo)
+        {
+            // Draw sightRadius Gizmos
+            Gizmos.color = gizmoSightRadiusColor;
+            Gizmos.DrawWireSphere(transform.position, sightRadius);
+        }
     }
 
     void OnDrawGizmos()
     {
-        // Draw path lines
-        Gizmos.color = gizmoPathColor;
-        if (onPath && path.Length > 0)
+        if (showPathGizmo)
         {
-            // Draw line from it self node to next node
-            Vector3 startPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
-            Gizmos.DrawLine(transform.position, startPos);
-
-            for (int i = currentWaypoint; i < path.Length-1; i++)
+            // Draw path lines
+            Gizmos.color = gizmoPathColor;
+            if (onPath && path.Length > 0)
             {
-                Vector3 pos1 = new Vector3(path[i].x, transform.position.y, path[i].z);
-                Vector3 pos2 = new Vector3(path[i+1].x, transform.position.y, path[i+1].z);
+                // Draw line from it self node to next node
+                Vector3 startPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
+                Gizmos.DrawLine(transform.position, startPos);
 
-                // Draw a sphere on the node
-                Gizmos.DrawSphere(pos1, 0.2f);
+                for (int i = currentWaypoint; i < path.Length - 1; i++)
+                {
+                    Vector3 pos1 = new Vector3(path[i].x, transform.position.y, path[i].z);
+                    Vector3 pos2 = new Vector3(path[i + 1].x, transform.position.y, path[i + 1].z);
 
-                // Draw line from start node to end node
-                Gizmos.DrawLine(pos1, pos2);
+                    // Draw a sphere on the node
+                    Gizmos.DrawSphere(pos1, 0.2f);
+
+                    // Draw line from start node to end node
+                    Gizmos.DrawLine(pos1, pos2);
+                }
+
+                // Draw a sphere on the last node of path
+                Vector3 nodePos = new Vector3(path[path.Length - 1].x, path[path.Length - 1].y, path[path.Length - 1].z);
+                Gizmos.DrawSphere(nodePos, 0);
             }
-
-            // Draw a sphere on the last node of path
-            Vector3 nodePos = new Vector3(path[path.Length-1].x, path[path.Length-1].y, path[path.Length-1].z);
-            Gizmos.DrawSphere(nodePos, 0);
         }
     }
 }
