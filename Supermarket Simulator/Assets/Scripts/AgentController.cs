@@ -24,8 +24,7 @@ public class AgentController : MonoBehaviour
     public Color gizmoPathColor = Color.green;
 
     Quaternion turnRotation;
-    Vector3 lastPos;
-    Vector3 currentVelocity;
+    Vector3 lastVelocity;
 
     int currentWaypoint;
     bool onPath = false;
@@ -39,8 +38,7 @@ public class AgentController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
 
         // initializations
-        lastPos = transform.position;
-        currentVelocity = Vector3.zero;
+        lastVelocity = Vector3.zero;
 	}
 	
 	void FixedUpdate () 
@@ -58,10 +56,6 @@ public class AgentController : MonoBehaviour
         {
             moveToTarget();
         }
-
-        // Calculate current velocity and set last position of agent
-        currentVelocity = (transform.position - lastPos) / Time.fixedDeltaTime;
-        lastPos = transform.position;
 	}
 
     void moveToTarget()
@@ -73,7 +67,8 @@ public class AgentController : MonoBehaviour
         Vector3 steerForce = seek(targetPos);
 
         // Add steerforce to the velocity vector
-        rb.velocity += steerForce;
+        rb.velocity = lastVelocity + steerForce;
+        lastVelocity = rb.velocity;
 
         // Rotate to look towards new current velocity
         Vector3 lookVector = removeVectorY(rb.velocity);
@@ -106,7 +101,7 @@ public class AgentController : MonoBehaviour
         steerForce = removeVectorY(steerForce);
 
         // clamp it to the maximum steer
-        //steerForce = Vector3.ClampMagnitude(steerForce, maxSteer);
+        steerForce = Vector3.ClampMagnitude(steerForce, maxSteer);
 
         return steerForce;
     }
@@ -170,7 +165,7 @@ public class AgentController : MonoBehaviour
         {
             // Draw line from it self node to next node
             Vector3 startPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
-            //Gizmos.DrawLine(transform.position, startPos);
+            Gizmos.DrawLine(transform.position, startPos);
 
             for (int i = currentWaypoint; i < path.Length-1; i++)
             {

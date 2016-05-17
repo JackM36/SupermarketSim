@@ -10,6 +10,10 @@ public class NavMeshPathFinding : MonoBehaviour
     public int diagonalMoveCost = 14;
     public int usedNodeCost = 1;
 
+    [Header("Path after processings")]
+    public bool applyPathSmoothing = true;
+    public bool applyPathPenalties = true;
+
     NavMesh navMesh;
     NavMeshPathManager pathManager;
 
@@ -119,11 +123,17 @@ public class NavMeshPathFinding : MonoBehaviour
             path = tracePath(startNode, targetNode);
 
             // Smooth the path
-            //path = smoothPath(path);
+            if (applyPathSmoothing)
+            {
+                path = smoothPath(path);
+            }
 
             // penalize all nodes of this path because they are being used by the agent that will follow this path
             // This will make agents take slightly different paths to avoid overused paths
-            penalizePath(path);
+            if (applyPathPenalties)
+            {
+                penalizePath(path);
+            }
 
             // Convert path to vector positions instead of node objects
             vectorPath = vectorizePath(path);
