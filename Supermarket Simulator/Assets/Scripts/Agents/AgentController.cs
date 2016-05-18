@@ -14,8 +14,6 @@ public class AgentController : MonoBehaviour
     public float reachedTargetRadius = 1;
 
     [Header("Editor Visuals")]
-    public bool showSightRadiusGizmo = true;
-    public Color gizmoSightRadiusColor = Color.red;
     public bool showPathGizmo = true;
     public Color gizmoPathColor = Color.green;
 
@@ -68,6 +66,7 @@ public class AgentController : MonoBehaviour
                 steeringBehaviours.Add(SteeringBehaviours.Behaviour.seek);
             }
             steeringBehaviours.Add(SteeringBehaviours.Behaviour.separate);
+            steeringBehaviours.Add(SteeringBehaviours.Behaviour.obstacleAvoidance);
 
             move(steeringBehaviours);
         }
@@ -174,16 +173,6 @@ public class AgentController : MonoBehaviour
                 Vector3 nodePos = new Vector3(path[path.Length - 1].x, path[path.Length - 1].y, path[path.Length - 1].z);
                 Gizmos.DrawSphere(nodePos, 0);
             }
-        }
-    }
-
-    void OnDrawGizmosSelected() 
-    {
-        if (Application.isPlaying && showSightRadiusGizmo)
-        {
-            // Draw sightRadius Gizmos
-            Gizmos.color = gizmoSightRadiusColor;
-            Gizmos.DrawWireSphere(transform.position, steering.sightRadius);
         }
     }
 }

@@ -112,7 +112,8 @@ public class NavMeshPathFinding : MonoBehaviour
         }
 
         //wait one frame
-        yield return null;
+        //yield return null;
+        yield return StartCoroutine(WaitFor.Frames(2));
 
         List<NavMeshNode> path = new List<NavMeshNode>();
         Vector3[] vectorPath = new Vector3[0];
