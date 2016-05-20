@@ -65,8 +65,9 @@ public class AgentController : MonoBehaviour
             {
                 steeringBehaviours.Add(SteeringBehaviours.Behaviour.seek);
             }
-            steeringBehaviours.Add(SteeringBehaviours.Behaviour.separate);
+            //steeringBehaviours.Add(SteeringBehaviours.Behaviour.separate);
             steeringBehaviours.Add(SteeringBehaviours.Behaviour.obstacleAvoidance);
+            steeringBehaviours.Add(SteeringBehaviours.Behaviour.unalignedObstacleAvoidance);
 
             move(steeringBehaviours);
         }

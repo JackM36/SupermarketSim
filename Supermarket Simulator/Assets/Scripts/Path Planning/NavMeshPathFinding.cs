@@ -24,9 +24,23 @@ public class NavMeshPathFinding : MonoBehaviour
         pathManager = GetComponent<NavMeshPathManager>();
 	}
 
-    public void getPath(Vector3 startPos, Vector3 targetPos)
+    public void getPath2(Vector3 startPos, Vector3 targetPos)
     {
         StartCoroutine(findPath(startPos, targetPos));
+    }
+
+    public void getPath(Vector3 startPos, Vector3 targetPos)
+    {
+        // Get start and target nodes
+        NavMeshNode startNode = navMesh.getNode(startPos);
+        NavMeshNode targetNode = navMesh.getNode(targetPos);
+
+        Vector3[] vectorPath = new Vector3[2];
+        vectorPath[0] = startNode.position;
+        vectorPath[1] = targetNode.position;
+
+        pathManager.finishedProcessingPath(vectorPath, true);
+
     }
 	
     IEnumerator findPath(Vector3 startPos, Vector3 targetPos)
@@ -113,7 +127,7 @@ public class NavMeshPathFinding : MonoBehaviour
 
         //wait one frame
         //yield return null;
-        yield return StartCoroutine(WaitFor.Frames(2));
+        yield return StartCoroutine(WaitFor.Frames(0));
 
         List<NavMeshNode> path = new List<NavMeshNode>();
         Vector3[] vectorPath = new Vector3[0];
