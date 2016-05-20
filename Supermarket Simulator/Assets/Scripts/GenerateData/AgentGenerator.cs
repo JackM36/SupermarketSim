@@ -6,7 +6,7 @@ using UnityEditor;
 public class AgentGenerator : MonoBehaviour
 {
     [Header("JSON files")]
-    public string customersJsonPath = "Assets/Files/data.json";
+    public string customersJsonPath = "Assets/Files/customerData.json";
 
     [Header("Customers")]
     public int customersNumber;

@@ -5,7 +5,11 @@ using System.Collections;
 
 public class AgentSpawner : MonoBehaviour 
 {
+    [Header("JSON files")]
+    public string customersJsonPath = "Assets/Files/customerData.json";
+
     [Header("Customers")]
+    public GameObject spawnArea;
     public int customersNumber;
     public float spawningWaitingTime;
     public List<GameObject> customerModels;
@@ -17,7 +21,8 @@ public class AgentSpawner : MonoBehaviour
     Vector2[] spawnRange;
 
     // Use this for initialization
-    void Start () {
+    void Start () 
+    {
         // initialize items table 
         items = new Item[(int)Category.CategoryType.CategoryNumber];        
 
@@ -35,9 +40,7 @@ public class AgentSpawner : MonoBehaviour
 
             items[(int)category] = new Item(category.ToString(), min, med, max);
         }
-
-        // find spawn area
-        GameObject spawnArea = GameObject.Find("SpawnArea");
+            
         Vector3 spawnAreaDimensions = spawnArea.GetComponent<Collider>().bounds.size;
         Vector3 spawnAreaPosition = spawnArea.gameObject.transform.position;
         spawnRange = new Vector2[2];
@@ -62,13 +65,14 @@ public class AgentSpawner : MonoBehaviour
     {
         try
         {
-            customerData = System.IO.File.ReadAllText("Assets/Files/customersData.json");
+            customerData = System.IO.File.ReadAllText(customersJsonPath);
         }
         catch (System.IO.FileNotFoundException)
         {
             Debug.LogError("Agent Spawner failed: Customers JSON file not found!");
             yield break;
         }
+
         data = JsonMapper.ToObject(customerData);
         GameObject customersPlaceholder = new GameObject("Customers");
 

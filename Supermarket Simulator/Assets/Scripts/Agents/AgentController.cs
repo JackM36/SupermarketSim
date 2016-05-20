@@ -11,7 +11,7 @@ public class AgentController : MonoBehaviour
     [Header("Path Finding")]
     [HideInInspector]
     public Vector3[] path;
-    public float reachedTargetRadius = 1;
+    public float reachedTargetRadius = 1.5f;
 
     [Header("Editor Visuals")]
     public bool showPathGizmo = true;
