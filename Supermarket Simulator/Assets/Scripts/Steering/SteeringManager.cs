@@ -101,7 +101,7 @@ public class SteeringManager : MonoBehaviour
         targetPos = currentTarget;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         performSteering();
     }
