@@ -39,7 +39,7 @@ public class SteeringManager : MonoBehaviour
     public bool showFutureBoundingSphereGizmo = true;
     public Color gizmoFutureBoundingSphereColor = Color.magenta;
 
-    [Space(10)]
+    [HideInInspector]
     public List<SteeringBehaviourItem> steeringBehaviours;
 
     [HideInInspector]
