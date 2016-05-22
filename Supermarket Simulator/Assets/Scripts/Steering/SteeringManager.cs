@@ -39,7 +39,6 @@ public class SteeringManager : MonoBehaviour
     public bool showFutureBoundingSphereGizmo = true;
     public Color gizmoFutureBoundingSphereColor = Color.magenta;
 
-    [HideInInspector]
     public List<SteeringBehaviourItem> steeringBehaviours;
 
     [HideInInspector]
@@ -70,6 +69,7 @@ public class SteeringManager : MonoBehaviour
     {
         seek,
         arrive,
+        seekArrive,
         separate,
         obstacleAvoidance,
         unalignedObstacleAvoidance
@@ -82,7 +82,7 @@ public class SteeringManager : MonoBehaviour
 
         // initializations
         lastVelocity = Vector3.zero;
-        getSteeringBehaviours();
+        initSteeringBehaviours();
     }
 
     public void setTargets(Vector3 currentTarget, Vector3 finalTarget)
@@ -147,7 +147,7 @@ public class SteeringManager : MonoBehaviour
         return Quaternion.LookRotation(lookVector);
     }
 
-    void getSteeringBehaviours()
+    void initSteeringBehaviours()
     {
         for (int i = 0; i < steeringBehaviours.Count; i++)
         {
@@ -158,6 +158,10 @@ public class SteeringManager : MonoBehaviour
             if(steeringBehaviours[i].type == SteeringBehaviourType.arrive)
             {
                 steeringBehaviours[i].behaviour = new SteeringBehaviourArrive(this);
+            }
+            if(steeringBehaviours[i].type == SteeringBehaviourType.seekArrive)
+            {
+                steeringBehaviours[i].behaviour = new SteeringBehaviourSeekArrive(this);
             }
             if(steeringBehaviours[i].type == SteeringBehaviourType.separate)
             {
@@ -227,11 +231,18 @@ public class SteeringManager : MonoBehaviour
 [System.Serializable]
 public class SteeringBehaviourItem
 {
-    public SteeringManager.SteeringBehaviourType type;
     public bool enabled;
+    public SteeringManager.SteeringBehaviourType type;
     [Range(1,100)]
     public float priority;
 
     [HideInInspector]
     public SteeringBehaviour behaviour;
+
+    public SteeringBehaviourItem(SteeringManager.SteeringBehaviourType type, bool enabled, float priority)
+    {
+        this.type = type;
+        this.enabled = enabled;
+        this.priority = priority;
+    }
 }

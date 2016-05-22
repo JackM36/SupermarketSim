@@ -93,10 +93,10 @@ public class AgentSpawner : MonoBehaviour
 
             // assign relative values to customers according te input file
             customer.name = data[i]["name"].ToString();
-            customer.GetComponent<SteeringBehaviours>().maxSpeed = float.Parse(data[i]["mSpeed"].ToString());
-            customer.GetComponent<SteeringBehaviours>().maxSteer = float.Parse(data[i]["mSteer"].ToString());
-            customer.GetComponent<SteeringBehaviours>().sightRadius = float.Parse(data[i]["sRadius"].ToString());
-            customer.GetComponent<SteeringBehaviours>().slowDownRadius = float.Parse(data[i]["sDownRadius"].ToString());
+            customer.GetComponent<SteeringManager>().maxSpeed = float.Parse(data[i]["mSpeed"].ToString());
+            customer.GetComponent<SteeringManager>().maxSteer = float.Parse(data[i]["mSteer"].ToString());
+            customer.GetComponent<SteeringManager>().sightRadius = float.Parse(data[i]["sRadius"].ToString());
+            customer.GetComponent<SteeringManager>().slowDownRadius = float.Parse(data[i]["sDownRadius"].ToString());
             customer.GetComponent<CustomerController>().reachedTargetRadius = float.Parse(data[i]["tMaxDistance"].ToString());
             customer.GetComponent<CustomerController>().budget = float.Parse(data[i]["budget"].ToString());
 

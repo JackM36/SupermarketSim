@@ -9,11 +9,13 @@ public class SteeringManagerEditor : Editor
 
     void OnEnable()
     {
-        steeringManager = (SteeringManager)target;
+        //steeringManager = (SteeringManager)target;
+        //addAllSteeringBehavioursToInspector();
     }
 
     public override void OnInspectorGUI()
     {
+        /*
         GUILayout.Space(10);
         GUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Steering behaviour", EditorStyles.boldLabel, GUILayout.Width(230));
@@ -36,6 +38,20 @@ public class SteeringManagerEditor : Editor
         }
 
         GUILayout.Space(10);
+        */
         DrawDefaultInspector();
+    }
+
+    void addAllSteeringBehavioursToInspector()
+    {
+        // add all steering behaviours to the list
+        if (steeringManager.steeringBehaviours.Count == 0)
+        {
+            steeringManager.steeringBehaviours.Add(new SteeringBehaviourItem(SteeringManager.SteeringBehaviourType.seek, true, 1f));
+            steeringManager.steeringBehaviours.Add(new SteeringBehaviourItem(SteeringManager.SteeringBehaviourType.arrive, true, 1f));
+            steeringManager.steeringBehaviours.Add(new SteeringBehaviourItem(SteeringManager.SteeringBehaviourType.separate, true, 2f));
+            steeringManager.steeringBehaviours.Add(new SteeringBehaviourItem(SteeringManager.SteeringBehaviourType.obstacleAvoidance, true, 3f));
+            steeringManager.steeringBehaviours.Add(new SteeringBehaviourItem(SteeringManager.SteeringBehaviourType.unalignedObstacleAvoidance, true, 3f));
+        }
     }
 }
