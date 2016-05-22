@@ -6,7 +6,7 @@ using System.Collections;
 public class AgentSpawner : MonoBehaviour 
 {
     [Header("JSON files")]
-    public string customersJsonPath = "Assets/Files/customerData.json";
+    public string customersJsonPath = "Assets/Files/customersData.json";
 
     [Header("Customers")]
     public GameObject spawnArea;

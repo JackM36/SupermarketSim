@@ -6,11 +6,11 @@ using UnityEditor;
 public class AgentGenerator : MonoBehaviour
 {
     [Header("JSON files")]
-    public string customersJsonPath = "Assets/Files/customerData.json";
+    public string customersJsonPath = "Assets/Files/customersData.json";
 
     [Header("Customers")]
     public int customersNumber;
-    public Vector2 maxSpeedRange, maxSteerRange, sightRadiusRange, slowDownRadiusRange, targetMaxDistanceRange, budgetRange;
+    public Vector2 maxSpeedRange, maxSteerRange, sightRadiusRange, slowDownRadiusRange, reachedTargetRadius, budgetRange;
 
     public void generate()
     {
@@ -45,7 +45,7 @@ public class AgentGenerator : MonoBehaviour
             double maxSteer = System.Math.Round(Random.Range(maxSteerRange.x, maxSteerRange.y), 2); 
             double sightRadius = System.Math.Round(Random.Range(sightRadiusRange.x, sightRadiusRange.y), 2);
             double slowDownRadius = System.Math.Round(Random.Range(slowDownRadiusRange.x, slowDownRadiusRange.y), 2);
-            double targetMaxDistance = System.Math.Round(Random.Range(targetMaxDistanceRange.x, targetMaxDistanceRange.y), 2);
+            double targetMaxDistance = System.Math.Round(Random.Range(reachedTargetRadius.x, reachedTargetRadius.y), 2);
             double budget = System.Math.Round(Random.Range(budgetRange.x, budgetRange.y), 2);
             _data.Add(new CustomerData("customer " + i, maxSpeed, maxSteer, sightRadius, slowDownRadius, targetMaxDistance, budget , preferences, bPreferences, sList));
            

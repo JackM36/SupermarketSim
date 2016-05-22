@@ -35,6 +35,10 @@ public class SteeringBehaviours : MonoBehaviour
     public Color gizmoCurrentVelocityColor = Color.green;
     public bool showSightRadiusGizmo = true;
     public Color gizmoSightRadiusColor = Color.red;
+    public bool showBoundingSphereGizmo = true;
+    public Color gizmoBoundingSphereColor = Color.magenta;
+    public bool showFutureBoundingSphereGizmo = true;
+    public Color gizmoFutureBoundingSphereColor = Color.magenta;
 
     public enum Behaviour
     {
@@ -316,12 +320,16 @@ public class SteeringBehaviours : MonoBehaviour
             DrawArrow.ForGizmo(transform.position, currentVelocity);
         }
 
-        Gizmos.color = Color.magenta;
-        Gizmos.DrawWireSphere(transform.position, boundingSphereRadius);
-        Gizmos.DrawLine(transform.position, transform.position + transform.forward * obstacleMaxDistance);
-
-        if (Application.isPlaying)
+        if (showBoundingSphereGizmo)
         {
+            Gizmos.color = gizmoBoundingSphereColor;
+            Gizmos.DrawWireSphere(transform.position, boundingSphereRadius);
+            Gizmos.DrawLine(transform.position, transform.position + transform.forward * obstacleMaxDistance);
+        }
+
+        if (Application.isPlaying && showFutureBoundingSphereGizmo)
+        {
+            Gizmos.color = gizmoFutureBoundingSphereColor;
             Gizmos.DrawWireSphere(transform.position + currentVelocity, boundingSphereRadius);
         }
     }

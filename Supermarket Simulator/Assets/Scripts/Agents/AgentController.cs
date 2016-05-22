@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(SteeringManager))]
 public class AgentController : MonoBehaviour 
 {
     public Transform target;
@@ -25,14 +26,14 @@ public class AgentController : MonoBehaviour
 
     [HideInInspector]
     public Rigidbody rb;
-    SteeringBehaviours steering;
+    SteeringManager steering;
     List<SteeringBehaviours.Behaviour> steeringBehaviours;
 
     void Awake() 
     {
         // Get components
         rb = GetComponent<Rigidbody>();
-        steering = GetComponent<SteeringBehaviours>();
+        steering = GetComponent<SteeringManager>();
 
         // initializations
         steeringBehaviours = new List<SteeringBehaviours.Behaviour>();
@@ -52,41 +53,16 @@ public class AgentController : MonoBehaviour
         // If current target/waypoint has been reached, go to the next one
         if (currentWaypoint < path.Length)
         {
-            // Clear previous behaviours
-            steeringBehaviours.Clear();
-
-            // Add the required steering behaviours
-            // If heading towards the last waypoint, then use arrive instead of seek
-            if (currentWaypoint == path.Length - 1)
-            {
-                steeringBehaviours.Add(SteeringBehaviours.Behaviour.arrive);
-            }
-            else
-            {
-                steeringBehaviours.Add(SteeringBehaviours.Behaviour.seek);
-            }
-            //steeringBehaviours.Add(SteeringBehaviours.Behaviour.separate);
-            steeringBehaviours.Add(SteeringBehaviours.Behaviour.obstacleAvoidance);
-            steeringBehaviours.Add(SteeringBehaviours.Behaviour.unalignedObstacleAvoidance);
-
-            move(steeringBehaviours);
+            move();
         }
 	}
 
-    void move(List<SteeringBehaviours.Behaviour> steeringBehaviours)
+    void move()
     {
         // get position of current waypoint
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
-        // Get required steerforce
-        Vector3 steerForce = steering.performSteering(steeringBehaviours, targetPos, target.position);
-
-        // Add steerforce to the velocity vector
-        rb.velocity = lastVelocity + steerForce;
-        lastVelocity = rb.velocity;
-
-        // Rotate to look towards new current velocity
-        transform.rotation = steering.lookTowardsVelocity();
+        steering.setTargets(targetPos, target.position);
 
         // If the unit is close enough to the currentWaypoint, register it as reached
         if (Vector3.Distance(transform.position, targetPos) < reachedTargetRadius)
