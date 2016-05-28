@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using LitJson;
 using System.Collections;
 
+[RequireComponent(typeof(AgentGenerator))]
 public class AgentSpawner : MonoBehaviour 
 {
     [Header("JSON files")]
@@ -10,8 +11,9 @@ public class AgentSpawner : MonoBehaviour
 
     [Header("Customers")]
     public GameObject spawnArea;
-    public int customersNumber;
-    public float spawningWaitingTime;
+    public int totalCustomerNumber;
+    public Vector2 customerNumberPerSpawnRange;
+    public Vector2 spawnWaitingTimeRange;
     public List<GameObject> customerModels;
 
     Item[] items;
@@ -77,9 +79,9 @@ public class AgentSpawner : MonoBehaviour
         GameObject customersPlaceholder = new GameObject("Customers");
 
         // store spawn position for every customer in order to avoid collisions between them upon spawn
-        spawnPositions = new List<Vector3>(customersNumber);
+        spawnPositions = new List<Vector3>(totalCustomerNumber);
 
-        for (int i = 0; i < customersNumber; i++)
+        for (int i = 0; i < totalCustomerNumber; i++)
         {
             // generate customers
             GameObject customer = (GameObject)Instantiate(customerModels[Random.Range(0, customerModels.Count)], new Vector3(0, 0, 0), Quaternion.identity);
@@ -89,38 +91,41 @@ public class AgentSpawner : MonoBehaviour
             customer.gameObject.transform.position = getPosition(customer);
 
             // target position
-            customer.GetComponent<CustomerController>().target = GameObject.Find("Target").transform;
+            customer.GetComponent<CustomerController>().finalTarget = GameObject.Find("Target").transform;
 
             // assign relative values to customers according te input file
             customer.name = data[i]["name"].ToString();
-            customer.GetComponent<SteeringManager>().maxSpeed = float.Parse(data[i]["mSpeed"].ToString());
-            customer.GetComponent<SteeringManager>().maxSteer = float.Parse(data[i]["mSteer"].ToString());
-            customer.GetComponent<SteeringManager>().sightRadius = float.Parse(data[i]["sRadius"].ToString());
-            customer.GetComponent<SteeringManager>().slowDownRadius = float.Parse(data[i]["sDownRadius"].ToString());
-            customer.GetComponent<CustomerController>().reachedTargetRadius = float.Parse(data[i]["tMaxDistance"].ToString());
+            customer.GetComponent<SteeringManager>().maxSpeed = float.Parse(data[i]["maxSpeed"].ToString());
+            customer.GetComponent<SteeringManager>().maxSteer = float.Parse(data[i]["maxSteer"].ToString());
+            customer.GetComponent<SteeringManager>().sightRadius = float.Parse(data[i]["sightRadius"].ToString());
+            customer.GetComponent<SteeringManager>().slowDownRadius = float.Parse(data[i]["slowDownRadius"].ToString());
+            customer.GetComponent<CustomerController>().reachedTargetRadius = float.Parse(data[i]["reachedTargetRadius"].ToString());
             customer.GetComponent<CustomerController>().budget = float.Parse(data[i]["budget"].ToString());
 
             // initialize customer preferences and shopping list
-            customer.GetComponent<CustomerController>().itemPreferences = new float[data[i]["itemPreferences"].Count];
-            customer.GetComponent<CustomerController>().budgetPreferences = new float[data[i]["budgetPreferences"].Count];
+            customer.GetComponent<CustomerController>().preferences = new float[data[i]["preferences"].Count];
+            customer.GetComponent<CustomerController>().willingnessToPay = new float[data[i]["willingnessToPay"].Count];
             customer.GetComponent<CustomerController>().shoppingList = new bool[data[i]["shoppingList"].Count];
 
-            for (int j = 0; j < data[i]["itemPreferences"].Count; j++)
+            for (int j = 0; j < data[i]["preferences"].Count; j++)
             {
                 // fill customer's item preferences
-                customer.GetComponent<CustomerController>().itemPreferences[j] = float.Parse(data[i]["itemPreferences"][j].ToString());
+                customer.GetComponent<CustomerController>().preferences[j] = float.Parse(data[i]["preferences"][j].ToString());
 
                 // fill customer's budget preferences
-                customer.GetComponent<CustomerController>().budgetPreferences[j] = float.Parse(data[i]["budgetPreferences"][j].ToString());
+                customer.GetComponent<CustomerController>().willingnessToPay[j] = float.Parse(data[i]["willingnessToPay"][j].ToString());
 
                 // fill customer's shooping list
                 customer.GetComponent<CustomerController>().shoppingList[j] = bool.Parse(data[i]["shoppingList"][j].ToString());
             }
 
-            // postpone execution per 5 customers generated
-            if ((i+1) % 5 == 0)
+            // wait until next batch of customers are generated
+            int customerNumberPerSpawn = Random.Range((int)customerNumberPerSpawnRange.x, (int)customerNumberPerSpawnRange.y+1);
+            float spawnWaitingTime = Random.Range(spawnWaitingTimeRange.x, spawnWaitingTimeRange.y);
+
+            if ((i+1) % customerNumberPerSpawn == 0)
             {
-                yield return new WaitForSeconds(spawningWaitingTime);
+                yield return new WaitForSeconds(spawnWaitingTime);
             }
         }        
     }

@@ -7,7 +7,7 @@ using System.Diagnostics;
 [RequireComponent(typeof(SteeringManager))]
 public class AgentController : MonoBehaviour 
 {
-    public Transform target;
+    public Transform finalTarget;
 
     [Header("Path Finding")]
     [HideInInspector]
@@ -29,7 +29,7 @@ public class AgentController : MonoBehaviour
     SteeringManager steering;
     List<SteeringBehaviours.Behaviour> steeringBehaviours;
 
-    void Awake() 
+    protected void Awake() 
     {
         // Get components
         rb = GetComponent<Rigidbody>();
@@ -40,13 +40,13 @@ public class AgentController : MonoBehaviour
         lastVelocity = Vector3.zero;
 	}
 	
-	void FixedUpdate () 
+	protected void FixedUpdate () 
     {
         // If the agent does not have a path yet, request one
         if (!onPath && !requestedPath)
         {
             // Make a request for a new path
-            NavMeshPathManager.requestPath(transform.position, target.position, onPathRequestProcessed);
+            NavMeshPathManager.requestPath(transform.position, finalTarget.position, onPathRequestProcessed);
             requestedPath = true;
         }
 
@@ -62,7 +62,7 @@ public class AgentController : MonoBehaviour
         // get position of current waypoint
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
-        steering.setTargets(targetPos, target.position);
+        steering.setTargets(targetPos, finalTarget.position);
 
         // If the unit is close enough to the currentWaypoint, register it as reached
         if (Vector3.Distance(transform.position, targetPos) < reachedTargetRadius)

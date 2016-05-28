@@ -126,7 +126,7 @@ public class NavMeshPathFinding : MonoBehaviour
 
         //wait one frame
         //yield return null;
-        yield return StartCoroutine(WaitFor.Frames(0));
+        yield return StartCoroutine(WaitFor.Frames(1));
 
         List<NavMeshNode> path = new List<NavMeshNode>();
         Vector3[] vectorPath = new Vector3[0];
@@ -202,7 +202,7 @@ public class NavMeshPathFinding : MonoBehaviour
             for (int j = i+1; j < path.Count; j++)
             {
                 // shoot a linecast from node a to b to determine if b is visible to a
-                if (Physics.Linecast(path[i].position, path[j].position))
+                if (Physics.Linecast(path[i].position, path[j].position, navMesh.unwalkableLayers))
                 {
                     // If there is a hit, it is not visible. Therefore add the last visible one to the list
                     smoothPath.Add(path[lastVisibleNodeIndex]);

@@ -25,6 +25,8 @@ public class SteeringManager : MonoBehaviour
     [Header("Angles")]
     [Range(0,90)]
     public float maxFloorAngle = 45;
+    [Range(0,90)]
+    public float avoidanceConservationAngle = 30;
 
     [Header("Editor Visuals")]
     public bool showGizmo = true;

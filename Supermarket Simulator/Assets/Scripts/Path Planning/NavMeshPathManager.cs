@@ -62,7 +62,7 @@ public class NavMeshPathManager : MonoBehaviour
             currentRequest = pathRequests.Dequeue();
             isProcessingPath = true;
 
-            pathFinder.getQuickPath(currentRequest.startPos, currentRequest.targetPos);
+            pathFinder.getPath(currentRequest.startPos, currentRequest.targetPos);
         }
     }
 

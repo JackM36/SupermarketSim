@@ -66,22 +66,22 @@ public class AgentGenerator : MonoBehaviour
 public class CustomerData
 {
     public string name;
-    public double mSpeed, mSteer, sRadius, sDownRadius, tMaxDistance;
+    public double maxSpeed, maxSteer, sightRadius, slowDownRadius, reachedTargetRadius;
     public double budget;
-    public double[] itemPreferences, budgetPreferences;
+    public double[] preferences, willingnessToPay;
     public bool[] shoppingList;
 
-    public CustomerData(string name, double mSpeed, double mSteer, double sRadius, double sDownRadius, double tMaxDistance, double budget, double[] itemPreferences, double[] budgetPreferences, bool[] shoppingList)
+    public CustomerData(string name, double maxSpeed, double maxSteer, double sightRadius, double slowDownRadius, double reachedTargetRadius, double budget, double[] preferences, double[] willingnessToPay, bool[] shoppingList)
     {
         this.name = name;
-        this.mSpeed = mSpeed;
-        this.mSteer = mSteer;
-        this.sRadius = sRadius;
-        this.sDownRadius = sDownRadius;
-        this.tMaxDistance = tMaxDistance;
+        this.maxSpeed = maxSpeed;
+        this.maxSteer = maxSteer;
+        this.sightRadius = sightRadius;
+        this.slowDownRadius = slowDownRadius;
+        this.reachedTargetRadius = reachedTargetRadius;
         this.budget = budget;
-        this.itemPreferences = itemPreferences;
-        this.budgetPreferences = budgetPreferences;
+        this.preferences = preferences;
+        this.willingnessToPay = willingnessToPay;
         this.shoppingList = shoppingList;
     }
 
