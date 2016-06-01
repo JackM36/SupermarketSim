@@ -33,8 +33,6 @@ public class SteeringBehaviourObstacleAvoidance : SteeringBehaviour
         Vector3 leftAngle = Quaternion.AngleAxis (-manager.avoidanceConservationAngle, manager.transform.up) * manager.transform.forward;
 
         bool avoidanceHit = Physics.SphereCast(ray, manager.boundingSphereRadius, out hit, manager.obstacleMaxDistance, manager.staticObstaclesLayers);
-        bool conserveAvoidanceLeftHit = Physics.Raycast(manager.currentPos, leftAngle, out hit, manager.obstacleMaxDistance, manager.staticObstaclesLayers);
-        bool conserveAvoidanceRightHit = Physics.Raycast(manager.currentPos, rightAngle, out hit, manager.obstacleMaxDistance, manager.staticObstaclesLayers);
 
         // shoot a shperecast with the ray created, to check for collisions
         if (avoidanceHit)
@@ -54,6 +52,8 @@ public class SteeringBehaviourObstacleAvoidance : SteeringBehaviour
             }
         }
 
+        bool conserveAvoidanceLeftHit = Physics.Raycast(manager.currentPos, leftAngle, out hit, manager.obstacleMaxDistance, manager.staticObstaclesLayers);
+        bool conserveAvoidanceRightHit = Physics.Raycast(manager.currentPos, rightAngle, out hit, manager.obstacleMaxDistance, manager.staticObstaclesLayers);
         if (conserveAvoidanceLeftHit)
         {
             Debug.DrawLine(manager.currentPos, hit.point, Color.green);

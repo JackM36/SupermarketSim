@@ -14,6 +14,11 @@ public class AgentController : MonoBehaviour
     public Vector3[] path;
     public float reachedTargetRadius = 1.5f;
 
+    [Header("Perception")]
+    public float perceptionSightDistance;
+    [Range(0,90)]
+    public float perceptionSightAngle = 40;
+
     [Header("Editor Visuals")]
     public bool showPathGizmo = true;
     public Color gizmoPathColor = Color.green;
@@ -42,8 +47,14 @@ public class AgentController : MonoBehaviour
 	
 	protected void FixedUpdate () 
     {
+        // If the agent does not have a target, find one
+        if (finalTarget == null)
+        {
+            getNewTarget();
+        }
+
         // If the agent does not have a path yet, request one
-        if (!onPath && !requestedPath)
+        if (finalTarget!= null && !onPath && !requestedPath)
         {
             // Make a request for a new path
             NavMeshPathManager.requestPath(transform.position, finalTarget.position, onPathRequestProcessed);
@@ -51,7 +62,7 @@ public class AgentController : MonoBehaviour
         }
 
         // If current target/waypoint has been reached, go to the next one
-        if (currentWaypoint < path.Length)
+        if (onPath && currentWaypoint < path.Length)
         {
             move();
         }
@@ -62,7 +73,24 @@ public class AgentController : MonoBehaviour
         // get position of current waypoint
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
+        // set targets, and enable steering if is it disabled
         steering.setTargets(targetPos, finalTarget.position);
+        if (!steering.enabled)
+        {
+            steering.enabled = true;
+        }
+
+        // if final target is a shelve standing point, use arrive, else use just seek
+        if (finalTarget.tag == "StandingPoint")
+        {
+            steering.steeringBehaviours[0].enabled = false;
+            steering.steeringBehaviours[1].enabled = true;
+        }
+        else
+        {
+            steering.steeringBehaviours[0].enabled = true;
+            steering.steeringBehaviours[1].enabled = false;
+        }
 
         // If the unit is close enough to the currentWaypoint, register it as reached
         if (Vector3.Distance(transform.position, targetPos) < reachedTargetRadius)
@@ -74,6 +102,7 @@ public class AgentController : MonoBehaviour
             if (currentWaypoint == path.Length-1)
             {
                 onPath = false;
+                finalTarget = null;
                 return;
             }
 
@@ -121,6 +150,9 @@ public class AgentController : MonoBehaviour
             requestedPath = false;
         }
     }
+
+    protected virtual void getNewTarget()
+    {}
 
     void OnDrawGizmos()
     {

@@ -47,6 +47,8 @@ public class SteeringManager : MonoBehaviour
     public Vector3 targetPos;
     [HideInInspector]
     public Vector3 finalTargetPos;
+    [HideInInspector]
+    public bool enabled = false;
 
     Vector3 lastVelocity;
     Rigidbody rb = null;
@@ -105,7 +107,10 @@ public class SteeringManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        performSteering();
+        if (enabled)
+        {
+            performSteering();
+        }
     }
 
     public void performSteering()
