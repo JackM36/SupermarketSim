@@ -7,8 +7,6 @@ using System.Diagnostics;
 [RequireComponent(typeof(SteeringManager))]
 public class AgentController : MonoBehaviour 
 {
-    public Transform finalTarget;
-
     [Header("Path Finding")]
     [HideInInspector]
     public Vector3[] path;
@@ -33,6 +31,8 @@ public class AgentController : MonoBehaviour
     public Rigidbody rb;
     SteeringManager steering;
     List<SteeringBehaviours.Behaviour> steeringBehaviours;
+    protected Stack<Transform> stackedTargets;
+    public Transform finalTarget = null;
 
     protected void Awake() 
     {
@@ -53,13 +53,15 @@ public class AgentController : MonoBehaviour
             getNewTarget();
         }
 
+        /*
         // If the agent does not have a path yet, request one
-        if (finalTarget!= null && !onPath && !requestedPath)
+        if (finalTarget != null && !onPath && !requestedPath)
         {
-            // Make a request for a new path
+            // Make a request for a new path. Get the top of the stack as new target
             NavMeshPathManager.requestPath(transform.position, finalTarget.position, onPathRequestProcessed);
             requestedPath = true;
         }
+        */
 
         // If current target/waypoint has been reached, go to the next one
         if (onPath && currentWaypoint < path.Length)
@@ -70,7 +72,7 @@ public class AgentController : MonoBehaviour
 
     void move()
     {
-        // get position of current waypoint
+        // get position of current waypoint and final target
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
         // set targets, and enable steering if is it disabled
@@ -147,7 +149,7 @@ public class AgentController : MonoBehaviour
             path = newPath;
             currentWaypoint = 0;
             onPath = true;
-            requestedPath = false;
+            //requestedPath = false;
         }
     }
 

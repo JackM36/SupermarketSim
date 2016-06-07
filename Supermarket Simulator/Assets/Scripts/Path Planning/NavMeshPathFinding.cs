@@ -50,6 +50,21 @@ public class NavMeshPathFinding : MonoBehaviour
         NavMeshNode startNode = navMesh.getNode(startPos);
         NavMeshNode targetNode = navMesh.getNode(targetPos);
 
+        // Check if startNode and targetNode are the same
+        // In that case just create a 2 point vector path directly
+        if (startNode == targetNode)
+        {
+            Vector3[] vectorSameNodePath = new Vector3[2];
+            vectorSameNodePath[0] = startPos;
+            vectorSameNodePath[1] = targetPos;
+
+            // TO DO: Penalize node---------------------------------------
+
+            // Let the request manager know the path was processed, and pass the path
+            pathManager.finishedProcessingPath(vectorSameNodePath, true);
+            return true;
+        }
+
         // Only try to find a path if both start and target nodes are actually walkable
         if (startNode.walkable && targetNode.walkable)
         {

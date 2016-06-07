@@ -4,25 +4,31 @@ using System.Collections.Generic;
 
 public class CustomerController : AgentController
 {
+    [Header("Customer")]
+    public float budget;
+
     [HideInInspector]
     public float[] preferences;
     [HideInInspector]
     public float[] willingnessToPay;
     [HideInInspector]
     public bool[] shoppingList;
-
+    [HideInInspector]
     public ProductCustomerInfo[] productsKnowledge;
 
-    [Header("Customer")]
-    public float budget;
-
     List<Transform> aisleEntryPoints;
+    ProductsManager productsManager;
 
     void Awake()
     {
         base.Awake();
 
-        getAisleEntryPoints();
+        // Get components
+        productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
+        aisleEntryPoints = getAisleEntryPoints();
+
+        // Initializations
+        stackedTargets = new Stack<Transform>();
     }
 
     void FixedUpdate()
@@ -33,8 +39,66 @@ public class CustomerController : AgentController
 
     override protected void getNewTarget()
     {
-        // Get a random aisle entry point as target
-        finalTarget = aisleEntryPoints[Random.Range(0, aisleEntryPoints.Count)].transform;
+        if (stackedTargets.Count > 0)
+        {
+            setTarget(stackedTargets.Pop(), false);
+            return;
+        }
+
+        Vector3 currentPos = transform.position;
+        float minDist = float.MaxValue;
+        int minDistIndex = -1;
+
+        // Go through the products on the list, and find the shelve that the agent should go to to get it
+        for (int i = 0; i < productsKnowledge.Length; i++)
+        {
+            // check if shelve for this product is known, and is not already in basket
+            if(productsKnowledge[i].toPickUp())
+            {
+                // Find the closest product/shelve from current position
+                Vector3 shelvePos = productsKnowledge[i].onShelve.transform.position;
+                float dist = Vector3.Distance(currentPos, shelvePos);
+
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    minDistIndex = i;
+                }
+            }
+        }
+
+        // If at least one product shelve is known, get a standing position and go there
+        if (minDistIndex != -1)
+        {
+            Shelve shelve = productsKnowledge[minDistIndex].onShelve.GetComponent<Shelve>();
+            setTarget(shelve.getAvailableStandingPoint(), false);
+            //finalTarget = shelve.getAvailableStandingPoint();
+        }
+        else
+        {
+            Transform target;
+
+            // Get a random aisle entry point as target
+            do
+            {
+                target = aisleEntryPoints[Random.Range(0, aisleEntryPoints.Count)].transform;
+            }
+            while(finalTarget == target);
+
+            //finalTarget = target;
+            setTarget(target, false);
+        }
+    }
+
+    void setTarget(Transform newtarget, bool stackPrevious = false)
+    {
+        if (stackPrevious)
+        {
+            stackedTargets.Push(finalTarget);
+        }
+
+        finalTarget = newtarget;
+        NavMeshPathManager.requestPath(transform.position, finalTarget.position, onPathRequestProcessed);
     }
 
     void seeProductsOnShelves()
@@ -74,6 +138,13 @@ public class CustomerController : AgentController
 
                 // Add new knowledge to list
                 productsKnowledge[shelve.productCategoryID].onShelve = onShelve;
+
+                // Check if this shelve has a product the customer was going to pick up
+                if (productsKnowledge[shelve.productCategoryID].toPickUp()) // TO DO: Check if the customer is already on the path to take this product ---------------------------------
+                {
+                    //finalTarget = shelve.getAvailableStandingPoint();
+                    setTarget(shelve.getAvailableStandingPoint(), true);
+                }
             }
 
             // draw ray line
@@ -81,14 +152,16 @@ public class CustomerController : AgentController
         }
     }
 
-    void getAisleEntryPoints()
+    List<Transform> getAisleEntryPoints()
     {
-        aisleEntryPoints = new List<Transform>();
+        List<Transform> aisleEntryPoints = new List<Transform>();
         Transform placeholder = GameObject.Find("AisleEntryPoints").transform;
 
         foreach (Transform child in placeholder)
         {
             aisleEntryPoints.Add(child);
         }
+
+        return aisleEntryPoints;
     }
 }

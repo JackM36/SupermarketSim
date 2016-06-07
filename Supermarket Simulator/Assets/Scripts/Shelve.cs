@@ -10,8 +10,8 @@ public class Shelve : MonoBehaviour
     public string productCategoryName;
     [HideInInspector]
     public float[] prices;
-    [HideInInspector]
-    public List<Transform> standingPoints;
+
+    List<Transform> standingPoints;
 
     void Awake()
     {
@@ -19,6 +19,7 @@ public class Shelve : MonoBehaviour
         productCategoryID = -1;
         productCategoryName = "";
         prices = new float[3];
+        standingPoints = new List<Transform>();
 
         // Get standing points
         foreach (Transform child in transform)
@@ -28,5 +29,12 @@ public class Shelve : MonoBehaviour
                 standingPoints.Add(child);
             }
         }
+    }
+
+    public Transform getAvailableStandingPoint()
+    {
+        // Get a random & available standing point for this shelve
+        int standingPointIndex = Random.Range(0, standingPoints.Count);
+        return standingPoints[standingPointIndex].transform;
     }
 }

@@ -7,9 +7,7 @@ public class ShelveProductMenu : MonoBehaviour
     [Header("UI Elements")]
     public Image productBanner;
     public Text productCategoryNameTxt;
-    public Text eyeLevelPriceCategoryTxt;
-    public Text handsLevelPriceCategoryTxt;
-    public Text feetLevelPriceCategoryTxt;
+    public Dropdown eyeLevelPriceDropdown;
 
     [Header("Empty Shelve Info")]
     public string emptyCategoryName = "Empty";
@@ -24,7 +22,9 @@ public class ShelveProductMenu : MonoBehaviour
     GameObject shelveObj;
     Shelve shelve;
     ProductCategory selectedProduct;
+    float[] selectedPrices = new float[3];
     int selectedProductID;
+    int selectedPriceID;
 
     public bool enabled
     {
@@ -37,6 +37,19 @@ public class ShelveProductMenu : MonoBehaviour
             this.GetComponent<Canvas>().enabled = value;
         }
             
+    }
+
+    public enum NavigationDirection
+    {
+        next,
+        previous
+    }
+
+    public enum shelveLevel
+    {
+        eyeLevel,
+        handsLevel,
+        feetLevel
     }
 
     void Awake()
@@ -56,12 +69,80 @@ public class ShelveProductMenu : MonoBehaviour
         }
     }
 
-    public void nextProduct()
+    public void nextProduct(string navDirStr)
     {
-        selectedProductID = mod((selectedProductID + 1), productCategories.Length);
-        selectedProduct = productCategories[selectedProductID];
+        NavigationDirection navDir = new NavigationDirection();
 
+        // Convert string command to enum
+        try
+        {
+            navDir = (NavigationDirection)System.Enum.Parse(typeof(NavigationDirection), navDirStr);
+        }
+        catch (System.Exception)
+        {
+            Debug.LogErrorFormat("nextProduct(string navDir): Can't convert {0} to enum, please check the spell. (Check button OnClick() parameter)", navDirStr);
+        }
+
+        // calculate the next selectedID based on if the NEXT or PREVIOUS button was pressed
+        if (navDir == NavigationDirection.next)
+        {
+            selectedProductID = mod((selectedProductID + 1), productCategories.Length);
+        }
+        else
+        {
+            selectedProductID = mod((selectedProductID - 1), productCategories.Length);
+        }
+
+        selectedProduct = productCategories[selectedProductID];
         updateUI();
+    }
+
+    public void nextPriceCategory(string levelStr)
+    {
+        // STRUCTURE OF THIS FUNCTION SHOULD CHANGE! IT IS TEMPORARY
+
+        shelveLevel level = new shelveLevel();
+
+        // Convert string command to enum
+        try
+        {
+            level = (shelveLevel)System.Enum.Parse(typeof(shelveLevel), levelStr);
+        }
+        catch (System.Exception)
+        {
+            Debug.LogErrorFormat("nextProduct(string navDir): Can't convert {0} to enum, please check the spell. (Check button OnClick() parameter)", levelStr);
+        }
+
+        // Get level
+        if (level == shelveLevel.eyeLevel)
+        {
+            selectedPriceID = 0;
+        }
+        else if (level == shelveLevel.handsLevel)
+        {
+            selectedPriceID = 1;
+        }
+        else if (level == shelveLevel.feetLevel)
+        {
+            selectedPriceID = 2;
+        }
+
+        // get price of product on that level
+        if (eyeLevelPriceDropdown.value == 0)
+        {
+            // if premium
+            selectedPrices[selectedPriceID] = selectedProduct.pricePremium;
+        }
+        else if(eyeLevelPriceDropdown.value == 1)
+        {
+            // if mid price
+            selectedPrices[selectedPriceID] = selectedProduct.priceMidPrice;
+        }
+        else if(eyeLevelPriceDropdown.value == 2)
+        {
+            // if cheap
+            selectedPrices[selectedPriceID] = selectedProduct.priceCheap;
+        }
     }
 
     void getClickedShelve()
@@ -104,14 +185,6 @@ public class ShelveProductMenu : MonoBehaviour
         }
     }
 
-    public void previousProduct()
-    {
-        selectedProductID = mod((selectedProductID - 1), productCategories.Length);
-        selectedProduct = productCategories[selectedProductID];
-
-        updateUI();
-    }
-
     public void clearShelve()
     {
         selectedProduct = null;
@@ -132,6 +205,8 @@ public class ShelveProductMenu : MonoBehaviour
         {
             shelve.productCategoryID = selectedProductID;
             shelve.productCategoryName = selectedProduct.categoryName;
+
+            shelve.prices = selectedPrices;
         }
             
         HideShelveMenu();
