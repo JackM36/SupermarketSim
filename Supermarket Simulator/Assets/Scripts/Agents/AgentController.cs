@@ -23,14 +23,15 @@ public class AgentController : MonoBehaviour
 
     Vector3 lastVelocity;
 
-    int currentWaypoint;
-    bool onPath = false;
-    bool requestedPath = false;
+    protected int currentWaypoint;
+    protected bool onPath = false;
+    protected bool requestedPath = false;
+    protected bool isBusy = false;
 
     [HideInInspector]
     public Rigidbody rb;
-    SteeringManager steering;
-    List<SteeringBehaviours.Behaviour> steeringBehaviours;
+    protected SteeringManager steering;
+    protected List<SteeringBehaviours.Behaviour> steeringBehaviours;
     protected Stack<Transform> stackedTargets;
     public Transform finalTarget = null;
 
@@ -48,7 +49,7 @@ public class AgentController : MonoBehaviour
 	protected void FixedUpdate () 
     {
         // If the agent does not have a target, find one
-        if (finalTarget == null)
+        if (!isBusy && finalTarget == null)
         {
             getNewTarget();
         }
@@ -70,46 +71,12 @@ public class AgentController : MonoBehaviour
         }
 	}
 
-    void move()
+    protected virtual void move(){}
+
+    protected virtual void onTarget()
     {
-        // get position of current waypoint and final target
-        Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
-
-        // set targets, and enable steering if is it disabled
-        steering.setTargets(targetPos, finalTarget.position);
-        if (!steering.enabled)
-        {
-            steering.enabled = true;
-        }
-
-        // if final target is a shelve standing point, use arrive, else use just seek
-        if (finalTarget.tag == "StandingPoint")
-        {
-            steering.steeringBehaviours[0].enabled = false;
-            steering.steeringBehaviours[1].enabled = true;
-        }
-        else
-        {
-            steering.steeringBehaviours[0].enabled = true;
-            steering.steeringBehaviours[1].enabled = false;
-        }
-
-        // If the unit is close enough to the currentWaypoint, register it as reached
-        if (Vector3.Distance(transform.position, targetPos) < reachedTargetRadius)
-        {
-            // node is already reached, so remove penalty for using this node
-            NavMeshPathManager.removeUsedNodePenalty(path[currentWaypoint]);
-
-            // Check if agent reached its final target
-            if (currentWaypoint == path.Length-1)
-            {
-                onPath = false;
-                finalTarget = null;
-                return;
-            }
-
-            currentWaypoint++;
-        }
+        onPath = false;
+        finalTarget = null;
     }
 
     /*
