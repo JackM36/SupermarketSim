@@ -94,7 +94,7 @@ public class CameraController : MonoBehaviour
     {
         Vector3 movement = Vector3.zero;
         movement.x = InputManager.instance.GetPanAxis().x;
-        movement.z = InputManager.instance.GetPanAxis().y;
+        movement.y = InputManager.instance.GetPanAxis().y;
         transform.Translate(movement * Time.deltaTime * panSpeed, Space.Self); // move based to self space.
     }
 
