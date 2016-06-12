@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 
 public class ShelveProductMenu : MonoBehaviour 
@@ -7,7 +8,7 @@ public class ShelveProductMenu : MonoBehaviour
     [Header("UI Elements")]
     public Image productBanner;
     public Text productCategoryNameTxt;
-    public Dropdown eyeLevelPriceDropdown;
+    public Dropdown[] shelveLevelsPriceDropdowns;
 
     [Header("Empty Shelve Info")]
     public string emptyCategoryName = "Empty";
@@ -22,9 +23,10 @@ public class ShelveProductMenu : MonoBehaviour
     GameObject shelveObj;
     Shelve shelve;
     ProductCategory selectedProduct;
-    float[] selectedPrices = new float[3];
+    int[] selectedPricesIDs = new int[3];
     int selectedProductID;
-    int selectedPriceID;
+
+    ProductsManager productsManager;
 
     public bool enabled
     {
@@ -45,17 +47,18 @@ public class ShelveProductMenu : MonoBehaviour
         previous
     }
 
-    public enum shelveLevel
+    public enum ShelveLevel
     {
-        eyeLevel,
-        handsLevel,
-        feetLevel
+        eyeLevel = 0,
+        handsLevel = 1,
+        feetLevel = 2
     }
 
     void Awake()
     {
         // Get components
-        productCategories = GameObject.Find("ProductsManager").GetComponent<ProductsManager>().productCategories;
+        productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
+        productCategories = productsManager.productCategories;
 
         // Initializations
         clearShelve();
@@ -97,51 +100,69 @@ public class ShelveProductMenu : MonoBehaviour
         updateUI();
     }
 
-    public void nextPriceCategory(string levelStr)
+    public void nextEyePriceCategory()
     {
-        // STRUCTURE OF THIS FUNCTION SHOULD CHANGE! IT IS TEMPORARY
-
-        shelveLevel level = new shelveLevel();
-
-        // Convert string command to enum
-        try
-        {
-            level = (shelveLevel)System.Enum.Parse(typeof(shelveLevel), levelStr);
-        }
-        catch (System.Exception)
-        {
-            Debug.LogErrorFormat("nextProduct(string navDir): Can't convert {0} to enum, please check the spell. (Check button OnClick() parameter)", levelStr);
-        }
-
-        // Get level
-        if (level == shelveLevel.eyeLevel)
-        {
-            selectedPriceID = 0;
-        }
-        else if (level == shelveLevel.handsLevel)
-        {
-            selectedPriceID = 1;
-        }
-        else if (level == shelveLevel.feetLevel)
-        {
-            selectedPriceID = 2;
-        }
+        int levelID = 0;
 
         // get price of product on that level
-        if (eyeLevelPriceDropdown.value == 0)
+        if (shelveLevelsPriceDropdowns[levelID].value == 0)
         {
             // if premium
-            selectedPrices[selectedPriceID] = selectedProduct.prices[0];
+            selectedPricesIDs[levelID] = 0;
         }
-        else if(eyeLevelPriceDropdown.value == 1)
+        else if(shelveLevelsPriceDropdowns[levelID].value == 1)
         {
             // if mid price
-            selectedPrices[selectedPriceID] = selectedProduct.prices[1];
+            selectedPricesIDs[levelID] = 1;
         }
-        else if(eyeLevelPriceDropdown.value == 2)
+        else if(shelveLevelsPriceDropdowns[levelID].value == 2)
         {
             // if cheap
-            selectedPrices[selectedPriceID] = selectedProduct.prices[2];
+            selectedPricesIDs[levelID] = 2;
+        }
+    }
+
+    public void nextHandsPriceCategory()
+    {
+        int levelID = 1;
+
+        // get price of product on that level
+        if (shelveLevelsPriceDropdowns[levelID].value == 0)
+        {
+            // if premium
+            selectedPricesIDs[levelID] = 0;
+        }
+        else if(shelveLevelsPriceDropdowns[levelID].value == 1)
+        {
+            // if mid price
+            selectedPricesIDs[levelID] = 1;
+        }
+        else if(shelveLevelsPriceDropdowns[levelID].value == 2)
+        {
+            // if cheap
+            selectedPricesIDs[levelID] = 2;
+        }
+    }
+
+    public void nextFeetCategory()
+    {
+        int levelID = 2;
+
+        // get price of product on that level
+        if (shelveLevelsPriceDropdowns[levelID].value == 0)
+        {
+            // if premium
+            selectedPricesIDs[levelID] = 0;
+        }
+        else if(shelveLevelsPriceDropdowns[levelID].value == 1)
+        {
+            // if mid price
+            selectedPricesIDs[levelID] = 1;
+        }
+        else if(shelveLevelsPriceDropdowns[levelID].value == 2)
+        {
+            // if cheap
+            selectedPricesIDs[levelID] = 2;
         }
     }
 
@@ -172,6 +193,8 @@ public class ShelveProductMenu : MonoBehaviour
                     {
                         selectedProductID = shelve.productCategoryID;
                         selectedProduct = productCategories[selectedProductID];
+
+                        print(shelve.shelveLevelPricesIDs[0]);
                     }
 
                     // update gui with shelve's product
@@ -206,7 +229,13 @@ public class ShelveProductMenu : MonoBehaviour
             shelve.productCategoryID = selectedProductID;
             shelve.productCategoryName = selectedProduct.categoryName;
 
-            shelve.shelveLevelPrices = selectedPrices;
+            //shelve.shelveLevelPricesIDs = new int[](selectedPricesIDs);
+            Array.Copy(selectedPricesIDs, shelve.shelveLevelPricesIDs, selectedPricesIDs.Length);
+            for (int i = 0; i < shelve.shelveLevelPrices.Length; i++)
+            {
+                shelve.shelveLevelPrices[i] = productsManager.productCategories[selectedProductID].prices[selectedPricesIDs[i]];
+            }
+
         }
             
         HideShelveMenu();
@@ -226,11 +255,19 @@ public class ShelveProductMenu : MonoBehaviour
         {
             productCategoryNameTxt.text = emptyCategoryName;
             productBanner.sprite = emptyCategoryBannerImg;
+
+            shelveLevelsPriceDropdowns[0].value = 0;
+            shelveLevelsPriceDropdowns[1].value = 0;
+            shelveLevelsPriceDropdowns[2].value = 0;
         }
         else
         {
             productCategoryNameTxt.text = selectedProduct.categoryName;
             productBanner.sprite = selectedProduct.bannerImg;
+
+            shelveLevelsPriceDropdowns[0].value = selectedPricesIDs[0];
+            shelveLevelsPriceDropdowns[1].value = selectedPricesIDs[1];
+            shelveLevelsPriceDropdowns[2].value = selectedPricesIDs[2];
         }
     }
 

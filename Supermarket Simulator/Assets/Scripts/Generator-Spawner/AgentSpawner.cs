@@ -24,11 +24,14 @@ public class AgentSpawner : MonoBehaviour
     int productCategoriesNumber;
 
     // Use this for initialization
-    void Start () 
+    void Awake () 
     {
         // Get components
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
-   
+	}
+	
+    public void spawnAgents()
+    {
         int productCategoriesNumber = productsManager.productCategories.Length;
 
         for (int i = 0; i < productCategoriesNumber; i++)
@@ -40,7 +43,7 @@ public class AgentSpawner : MonoBehaviour
 
             ProductCategory temp = productsManager.productCategories[i];
         }
-            
+
         Vector3 spawnAreaDimensions = spawnArea.GetComponent<Collider>().bounds.size;
         Vector3 spawnAreaPosition = spawnArea.gameObject.transform.position;
         spawnRange = new Vector2[2];
@@ -52,13 +55,6 @@ public class AgentSpawner : MonoBehaviour
         // coroutine for generating customers
         // customers are generated per 5 after the specified waiting time
         StartCoroutine(GenerateCustomers());
-
-	}
-	
-	// Update is called once per frame
-	void Update ()
-    {
-
     }
 
     IEnumerator GenerateCustomers()

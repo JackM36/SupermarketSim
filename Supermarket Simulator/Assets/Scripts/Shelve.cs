@@ -14,6 +14,8 @@ public class Shelve : MonoBehaviour
     [HideInInspector]
     public float[] shelveLevelPrices;
     [HideInInspector]
+    public int[] shelveLevelPricesIDs;
+    [HideInInspector]
     public List<Shelve> neighbourShelves;
 
     List<Transform> standingPoints;
@@ -32,17 +34,12 @@ public class Shelve : MonoBehaviour
         productCategoryID = -1;
         productCategoryName = "";
         shelveLevelPrices = new float[3];
+        shelveLevelPricesIDs = new int[3];
         neighbourShelves = new List<Shelve>();
         standingPoints = new List<Transform>();
 
         getStandingPoints();
         getNeighbourShelves();
-    }
-
-    void Update()
-    {
-        Debug.DrawRay(transform.position, Vector3.right * (halfSize + neighbourSensorDistance), Color.red);
-        Debug.DrawRay(transform.position, Vector3.left * (halfSize + neighbourSensorDistance), Color.red);
     }
 
     public Transform getAvailableStandingPoint()
