@@ -131,17 +131,17 @@ public class ShelveProductMenu : MonoBehaviour
         if (eyeLevelPriceDropdown.value == 0)
         {
             // if premium
-            selectedPrices[selectedPriceID] = selectedProduct.pricePremium;
+            selectedPrices[selectedPriceID] = selectedProduct.prices[0];
         }
         else if(eyeLevelPriceDropdown.value == 1)
         {
             // if mid price
-            selectedPrices[selectedPriceID] = selectedProduct.priceMidPrice;
+            selectedPrices[selectedPriceID] = selectedProduct.prices[1];
         }
         else if(eyeLevelPriceDropdown.value == 2)
         {
             // if cheap
-            selectedPrices[selectedPriceID] = selectedProduct.priceCheap;
+            selectedPrices[selectedPriceID] = selectedProduct.prices[2];
         }
     }
 
@@ -206,11 +206,12 @@ public class ShelveProductMenu : MonoBehaviour
             shelve.productCategoryID = selectedProductID;
             shelve.productCategoryName = selectedProduct.categoryName;
 
-            shelve.prices = selectedPrices;
+            shelve.shelveLevelPrices = selectedPrices;
         }
             
         HideShelveMenu();
     }
+
     public void HideShelveMenu()
     {
         // hide shelve UI

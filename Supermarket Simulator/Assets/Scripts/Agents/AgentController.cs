@@ -23,16 +23,22 @@ public class AgentController : MonoBehaviour
 
     Vector3 lastVelocity;
 
-    protected int currentWaypoint;
-    protected bool onPath = false;
-    protected bool requestedPath = false;
-    protected bool isBusy = false;
+    [HideInInspector]
+    public int currentWaypoint;
+    [HideInInspector]
+    public bool onPath = false;
+    [HideInInspector]
+    public bool requestedPath = false;
+    [HideInInspector]
+    public bool isBusy = false;
 
     [HideInInspector]
     public Rigidbody rb;
     protected SteeringManager steering;
     protected List<SteeringBehaviours.Behaviour> steeringBehaviours;
     protected Stack<Transform> stackedTargets;
+
+    //[HideInInspector]
     public Transform finalTarget = null;
 
     protected void Awake() 
@@ -71,7 +77,7 @@ public class AgentController : MonoBehaviour
         }
 	}
 
-    protected virtual void move(){}
+    public virtual void move(){}
 
     protected virtual void onTarget()
     {
@@ -120,7 +126,7 @@ public class AgentController : MonoBehaviour
         }
     }
 
-    protected virtual void getNewTarget()
+    public virtual void getNewTarget()
     {}
 
     void OnDrawGizmos()

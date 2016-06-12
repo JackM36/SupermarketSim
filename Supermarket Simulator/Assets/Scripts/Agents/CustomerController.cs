@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -6,6 +7,7 @@ public class CustomerController : AgentController
 {
     [Header("Customer")]
     public float budget;
+    public LayerMask staffLayer;
 
     [HideInInspector]
     public float[] preferences;
@@ -18,6 +20,19 @@ public class CustomerController : AgentController
 
     List<Transform> aisleEntryPoints;
     ProductsManager productsManager;
+    DecisionTree decisionTree;
+
+    struct ShelveLevel
+    {
+        public float shelveLevelPrice;
+        public float shelveLevelPref;
+
+        public ShelveLevel(float shelveLevelPrice, float shelveLevelPref)
+        {
+            this.shelveLevelPrice = shelveLevelPrice; // 0 = eye level, 1 = hands leve, 2 = feet level
+            this.shelveLevelPref = shelveLevelPref;
+        }
+    }
 
     void Awake()
     {
@@ -25,6 +40,7 @@ public class CustomerController : AgentController
 
         // Get components
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
+        decisionTree = transform.Find("DecisionTree").GetComponent<DecisionTree>();
         aisleEntryPoints = getAisleEntryPoints();
 
         // Initializations
@@ -33,11 +49,13 @@ public class CustomerController : AgentController
 
     void FixedUpdate()
     {
-        base.FixedUpdate();
+        //base.FixedUpdate();
+        decisionTree.execute(this);
         seeProductsOnShelves();
+        // TO DO: add closest staff function, when no known products are available
     }
 
-    override protected void move()
+    override public void move()
     {
         // get position of current waypoint and final target
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
@@ -89,8 +107,10 @@ public class CustomerController : AgentController
         base.onTarget();
     }
 
-    override protected void getNewTarget()
+    override public void getNewTarget()
     {
+        print(1);
+
         if (stackedTargets.Count > 0)
         {
             setTarget(stackedTargets.Pop(), false);
@@ -105,7 +125,7 @@ public class CustomerController : AgentController
         for (int i = 0; i < productsKnowledge.Length; i++)
         {
             // check if shelve for this product is known, and is not already in basket
-            if(productsKnowledge[i].toPickUp())
+            if(toPickUp(productsKnowledge[i]))
             {
                 // Find the closest product/shelve from current position
                 Vector3 shelvePos = productsKnowledge[i].onShelve.transform.position;
@@ -133,7 +153,7 @@ public class CustomerController : AgentController
             // Get a random aisle entry point as target
             do
             {
-                target = aisleEntryPoints[Random.Range(0, aisleEntryPoints.Count)].transform;
+                target = aisleEntryPoints[UnityEngine.Random.Range(0, aisleEntryPoints.Count)].transform;
             }
             while(finalTarget == target);
 
@@ -144,6 +164,8 @@ public class CustomerController : AgentController
 
     void setTarget(Transform newtarget, bool stackPrevious = false)
     {
+        print("set " + newtarget.name);
+
         if (stackPrevious)
         {
             stackedTargets.Push(finalTarget);
@@ -192,7 +214,7 @@ public class CustomerController : AgentController
                 productsKnowledge[shelve.productCategoryID].onShelve = onShelve;
 
                 // Check if this shelve has a product the customer was going to pick up
-                if (productsKnowledge[shelve.productCategoryID].toPickUp())
+                if (toPickUp(productsKnowledge[shelve.productCategoryID]))
                 {
                     // if this shelve was already the target of the customer, just do nothing
                     if (finalTarget != null && finalTarget.tag != "StandingPoint" && finalTarget.parent.GetComponent<Shelve>() != shelve)
@@ -207,12 +229,144 @@ public class CustomerController : AgentController
         }
     }
 
-    IEnumerator lookOnShelve(Transform shelve)
+    void getClosestStaff()
+    {
+        // TO DO: Check if staff is busy
+
+        // find staff agents within a radius
+        Collider[] colliders = Physics.OverlapSphere(transform.position, perceptionSightDistance, staffLayer);
+        float minDistance = perceptionSightDistance;
+
+        // visibility table,-1: not visible, 0: unknown visibility, 1: visible
+        int[] staffVisibility = new int[colliders.Length];
+        GameObject closestStaff;
+
+        if (colliders.Length > 0)
+        {
+            closestStaff = colliders[0].gameObject;
+        }
+        else
+        {
+            return;
+        }
+            
+        int index = 0;
+
+        // count how many staff agents are invisible
+        int count = 0;
+
+        while (count < colliders.Length)
+        {
+            // find closest staff
+            for (int i = 1; i < colliders.Length; i++)
+            {
+                if (staffVisibility[i] > -1)
+                {
+                    // find distance from customer to each staff
+                    float distance = Vector3.Distance(transform.position, colliders[i].transform.position);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        closestStaff = colliders[i].gameObject;
+                        index = i;
+                    }
+                }
+            }
+
+            // check if closestStaff is visible
+            if (Physics.Linecast(transform.position, closestStaff.transform.position))
+            {
+                setTarget(closestStaff.transform, false); // TO DO: not exact position, go close to him
+            }
+            else
+            {
+                staffVisibility[index] = -1;
+                count++;
+            }
+        }
+    }
+
+    public bool toPickUp(ProductCustomerInfo product)
+    {
+        // Calculate utility
+        float utility = product.getUtility(productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram);
+        float minUtility = 0.2f; // TEEEEEEEMP
+
+        // Decide if this products should be picked up
+        if(product.onShelve != null && !product.inBasket && utility >= minUtility && getProductPrice(product.onShelve.GetComponent<Shelve>()) != -1)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    float getProductPrice(Shelve shelve)
+    {
+        int productID = shelve.productCategoryID;
+        float pref = productsKnowledge[productID].pref;
+        float prefRadians = pref * Mathf.PI;
+
+        prefRadians = (3 + Mathf.Cos(prefRadians)) / 4;
+
+        ShelveLevel[] levels = new ShelveLevel[3];
+        float[] shelvePrices = productsManager.productCategories[productID].prices;
+
+        if (prefRadians < Mathf.PI)
+        {
+            levels[0] = new ShelveLevel(shelvePrices[2], prefRadians);
+            levels[1] = new ShelveLevel(shelvePrices[1], 1 - prefRadians);
+            levels[2] = new ShelveLevel(shelvePrices[0], 0);
+        }
+        else if (prefRadians > Mathf.PI && prefRadians < Mathf.PI*3)
+        {
+            levels[0] = new ShelveLevel(shelvePrices[1], prefRadians);
+            levels[1] = new ShelveLevel(shelvePrices[0], 1 - prefRadians);
+            levels[2] = new ShelveLevel(shelvePrices[2], 0);
+        }
+        else if (prefRadians > Mathf.PI*3 && prefRadians < Mathf.PI*4)
+        {
+            levels[0] = new ShelveLevel(shelvePrices[0], prefRadians);
+            levels[1] = new ShelveLevel(shelvePrices[1], 1 - prefRadians);
+            levels[2] = new ShelveLevel(shelvePrices[2], 0);
+        }
+
+        Array.Sort<ShelveLevel>(levels, (x,y) => x.shelveLevelPref.CompareTo(y.shelveLevelPref));
+        for (int i = 0; i < levels.Length; i++)
+        {
+            if (levels[i].shelveLevelPrice <= budget)
+            {
+                return levels[i].shelveLevelPrice;
+            }
+        }
+
+        // Not enough budget to get the product from any shelve level
+        return -1;
+    }
+
+    IEnumerator lookOnShelve(Transform shelveTransform)
     {
         isBusy = true;
         disableSteeringAvoidance();
 
         yield return new WaitForSeconds(3);
+
+        // Get Shelve and the product ID
+        Shelve shelve = shelveTransform.GetComponent<Shelve>();
+        int productID = shelve.productCategoryID;
+
+        // Get the product ID of all neighbouring shelves, and update their placement boost
+        for (int i = 0; i < shelve.neighbourShelves.Count; i++)
+        {
+            int neighbourProductID = shelve.neighbourShelves[i].productCategoryID;
+            // productsKnowledge[neighbourProductID] TO DO: ADD PLACEMENT BOOST
+        }
+
+        // Pickup the product and pay
+        productsKnowledge[productID].inBasket = true;
+        budget -= getProductPrice(productsKnowledge[productID].onShelve.GetComponent<Shelve>());
 
         isBusy = false;
         enableSteeringAvoidance();

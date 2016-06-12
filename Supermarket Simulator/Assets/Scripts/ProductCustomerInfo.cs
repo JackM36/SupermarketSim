@@ -34,27 +34,21 @@ public class ProductCustomerInfo : MonoBehaviour
         this.onShelve = null;
     }
 
-    public float getUtility(float weightPref=1, float weightToBuy = 1, float weightHasDiscount = 1)
+    public float pref
+    {
+        get
+        {
+            return preference * willingnessToPay; // TO DO: divide by product price
+        }
+    }
+
+    public float getUtility(float weightPref=1, float weightToBuy = 1, float weightHasDiscount = 1, float weightPlacement = 1, float weightPlanogram = 1)
     {
         // Calculate this product's utility based on the agent's knowledge about this product
         int toBuyInt = toBuy ? 1 : 0;
         int hasDiscountInt = hasDiscount ? 1 : 0;
-        float pref = preference * willingnessToPay;
-        float weightsTotal = weightToBuy + weightHasDiscount + weightHasDiscount;
+        float weightsTotal = weightToBuy + weightHasDiscount + weightHasDiscount + weightPlacement + weightPlanogram;
 
         return ((weightPref * pref) + (weightToBuy * toBuyInt) + (weightHasDiscount * hasDiscountInt)) / weightsTotal; // + placement + planogram
-    }
-
-    public bool toPickUp()
-    {
-        // Decide if this products should be picked up
-        if(onShelve !=null && !inBasket)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
     }
 }

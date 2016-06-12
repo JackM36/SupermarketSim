@@ -6,9 +6,7 @@ using System.Collections;
 public class ProductCategory
 {
     public string categoryName;
-    public float pricePremium;
-    public float priceMidPrice;
-    public float priceCheap;
+    public float[] prices;
     public Sprite bannerImg;
 
     public ProductCategory(string categoryName)
