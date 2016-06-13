@@ -9,6 +9,9 @@ public class ProductCategory
     public float[] prices;
     public Sprite bannerImg;
 
+    [HideInInspector]
+    public int discount;
+
     public ProductCategory(string categoryName)
     {
         this.categoryName = categoryName;

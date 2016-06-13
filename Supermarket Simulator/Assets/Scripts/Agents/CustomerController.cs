@@ -109,8 +109,6 @@ public class CustomerController : AgentController
 
     override public void getNewTarget()
     {
-        print(1);
-
         if (stackedTargets.Count > 0)
         {
             setTarget(stackedTargets.Pop(), false);
@@ -164,8 +162,6 @@ public class CustomerController : AgentController
 
     void setTarget(Transform newtarget, bool stackPrevious = false)
     {
-        print("set " + newtarget.name);
-
         if (stackPrevious)
         {
             stackedTargets.Push(finalTarget);
@@ -212,6 +208,8 @@ public class CustomerController : AgentController
 
                 // Add new knowledge to list
                 productsKnowledge[shelve.productCategoryID].onShelve = onShelve;
+
+                Debug.Log(name + ": Saw " + productsManager.productCategories[shelve.productCategoryID].categoryName + " with utility " + productsKnowledge[shelve.productCategoryID].getUtility(getProductPrice(productsKnowledge[shelve.productCategoryID].onShelve.GetComponent<Shelve>()), productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram));
 
                 // Check if this shelve has a product the customer was going to pick up
                 if (toPickUp(productsKnowledge[shelve.productCategoryID]))
@@ -288,14 +286,22 @@ public class CustomerController : AgentController
 
     public bool toPickUp(ProductCustomerInfo product)
     {
-        // Calculate utility
-        float utility = product.getUtility(productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram);
-        float minUtility = 0.2f; // TEEEEEEEMP
-
-        // Decide if this products should be picked up
-        if(product.onShelve != null && !product.inBasket && utility >= minUtility && getProductPrice(product.onShelve.GetComponent<Shelve>()) != -1)
+        if (product.onShelve != null && !product.inBasket)
         {
-            return true;
+            // Calculate utility
+            float price = getProductPrice(product.onShelve.GetComponent<Shelve>());
+            float utility = product.getUtility(price, productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram);
+            float minUtility = 0.3f; // TEEEEEEEMP
+
+            // Decide if this product should be picked up
+            if (utility >= minUtility && price != -1)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         else
         {
@@ -313,24 +319,25 @@ public class CustomerController : AgentController
 
         ShelveLevel[] levels = new ShelveLevel[3];
         float[] shelvePrices = productsManager.productCategories[productID].prices;
+        int discount = productsManager.productCategories[productID].discount;
 
         if (prefRadians < Mathf.PI)
         {
-            levels[0] = new ShelveLevel(shelvePrices[2], prefRadians);
-            levels[1] = new ShelveLevel(shelvePrices[1], 1 - prefRadians);
-            levels[2] = new ShelveLevel(shelvePrices[0], 0);
+            levels[0] = new ShelveLevel(shelvePrices[2] - ((shelvePrices[2]*discount)/100), prefRadians);
+            levels[1] = new ShelveLevel(shelvePrices[1] - ((shelvePrices[1]*discount)/100), 1 - prefRadians);
+            levels[2] = new ShelveLevel(shelvePrices[0] - ((shelvePrices[0]*discount)/100), 0);
         }
         else if (prefRadians > Mathf.PI && prefRadians < Mathf.PI*3)
         {
-            levels[0] = new ShelveLevel(shelvePrices[1], prefRadians);
-            levels[1] = new ShelveLevel(shelvePrices[0], 1 - prefRadians);
-            levels[2] = new ShelveLevel(shelvePrices[2], 0);
+            levels[0] = new ShelveLevel(shelvePrices[1] - ((shelvePrices[1]*discount)/100), prefRadians);
+            levels[1] = new ShelveLevel(shelvePrices[0] - ((shelvePrices[0]*discount)/100), 1 - prefRadians);
+            levels[2] = new ShelveLevel(shelvePrices[2] - ((shelvePrices[2]*discount)/100), 0);
         }
         else if (prefRadians > Mathf.PI*3 && prefRadians < Mathf.PI*4)
         {
-            levels[0] = new ShelveLevel(shelvePrices[0], prefRadians);
-            levels[1] = new ShelveLevel(shelvePrices[1], 1 - prefRadians);
-            levels[2] = new ShelveLevel(shelvePrices[2], 0);
+            levels[0] = new ShelveLevel(shelvePrices[0] - ((shelvePrices[0]*discount)/100), prefRadians);
+            levels[1] = new ShelveLevel(shelvePrices[1] - ((shelvePrices[1]*discount)/100), 1 - prefRadians);
+            levels[2] = new ShelveLevel(shelvePrices[2] - ((shelvePrices[2]*discount)/100), 0);
         }
 
         Array.Sort<ShelveLevel>(levels, (x,y) => x.shelveLevelPref.CompareTo(y.shelveLevelPref));
@@ -366,7 +373,10 @@ public class CustomerController : AgentController
 
         // Pickup the product and pay
         productsKnowledge[productID].inBasket = true;
-        budget -= getProductPrice(productsKnowledge[productID].onShelve.GetComponent<Shelve>());
+        float price = getProductPrice(productsKnowledge[productID].onShelve.GetComponent<Shelve>());
+        budget -= price;
+
+        Debug.Log(name + ": Picked up " + productsManager.productCategories[productID].categoryName + " for " + price);
 
         isBusy = false;
         enableSteeringAvoidance();

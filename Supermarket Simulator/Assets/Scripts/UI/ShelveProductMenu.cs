@@ -9,6 +9,8 @@ public class ShelveProductMenu : MonoBehaviour
     public Image productBanner;
     public Text productCategoryNameTxt;
     public Dropdown[] shelveLevelsPriceDropdowns;
+    public Slider discountSlider;
+    public Text discountvalueTxt;
 
     [Header("Empty Shelve Info")]
     public string emptyCategoryName = "Empty";
@@ -193,8 +195,6 @@ public class ShelveProductMenu : MonoBehaviour
                     {
                         selectedProductID = shelve.productCategoryID;
                         selectedProduct = productCategories[selectedProductID];
-
-                        print(shelve.shelveLevelPricesIDs[0]);
                     }
 
                     // update gui with shelve's product
@@ -208,10 +208,21 @@ public class ShelveProductMenu : MonoBehaviour
         }
     }
 
+    public void discountValueChanged()
+    {
+        discountvalueTxt.text = discountSlider.value + "%";
+    }
+
     public void clearShelve()
     {
         selectedProduct = null;
         selectedProductID = 0;
+
+        shelveLevelsPriceDropdowns[0].value = 0;
+        shelveLevelsPriceDropdowns[1].value = 0;
+        shelveLevelsPriceDropdowns[2].value = 0;
+
+        discountSlider.value = discountSlider.minValue;
 
         updateUI();
     }
@@ -222,7 +233,7 @@ public class ShelveProductMenu : MonoBehaviour
         if (selectedProduct == null)
         {
             shelve.productCategoryID = -1;
-            shelve.productCategoryName = "";    
+            shelve.productCategoryName = "";
         }
         else
         {
@@ -235,6 +246,8 @@ public class ShelveProductMenu : MonoBehaviour
             {
                 shelve.shelveLevelPrices[i] = productsManager.productCategories[selectedProductID].prices[selectedPricesIDs[i]];
             }
+
+            productsManager.productCategories[shelve.productCategoryID].discount = (int)discountSlider.value;
 
         }
             
@@ -259,15 +272,19 @@ public class ShelveProductMenu : MonoBehaviour
             shelveLevelsPriceDropdowns[0].value = 0;
             shelveLevelsPriceDropdowns[1].value = 0;
             shelveLevelsPriceDropdowns[2].value = 0;
+
+            discountSlider.value = discountSlider.minValue;
         }
         else
         {
             productCategoryNameTxt.text = selectedProduct.categoryName;
             productBanner.sprite = selectedProduct.bannerImg;
 
-            shelveLevelsPriceDropdowns[0].value = selectedPricesIDs[0];
-            shelveLevelsPriceDropdowns[1].value = selectedPricesIDs[1];
-            shelveLevelsPriceDropdowns[2].value = selectedPricesIDs[2];
+            shelveLevelsPriceDropdowns[0].value = shelve.shelveLevelPricesIDs[0];
+            shelveLevelsPriceDropdowns[1].value = shelve.shelveLevelPricesIDs[1];
+            shelveLevelsPriceDropdowns[2].value = shelve.shelveLevelPricesIDs[2];
+
+            discountSlider.value = productsManager.productCategories[selectedProductID].discount;
         }
     }
 
