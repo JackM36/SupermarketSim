@@ -9,6 +9,9 @@ public class CustomerController : AgentController
     public float budget;
     public LayerMask staffLayer;
 
+    [Header("Feelings")]
+    public float maxBored = 10;
+
     [HideInInspector]
     public float[] preferences;
     [HideInInspector]
@@ -21,6 +24,8 @@ public class CustomerController : AgentController
     List<Transform> aisleEntryPoints;
     ProductsManager productsManager;
     DecisionTree decisionTree;
+
+    float bored = 0;
 
     struct ShelveLevel
     {
@@ -99,7 +104,7 @@ public class CustomerController : AgentController
     override protected void onTarget()
     {
         // If final target is a shelve standing point, look on shelve
-        if (finalTarget.tag == "StandingPoint")
+        if (finalTarget.tag == "StandingPoint" && finalTarget.parent.tag == "Shelve")
         {
             StartCoroutine(lookOnShelve(finalTarget.parent));
         }
@@ -118,10 +123,17 @@ public class CustomerController : AgentController
         Vector3 currentPos = transform.position;
         float minDist = float.MaxValue;
         int minDistIndex = -1;
+        int desiredProducts = 0;
 
         // Go through the products on the list, and find the shelve that the agent should go to to get it
         for (int i = 0; i < productsKnowledge.Length; i++)
         {
+            // count how many products the customer plans to buy yet
+            if (productsKnowledge[i].toBuy && !productsKnowledge[i].inBasket && productsKnowledge[i].onShelve != null)
+            {
+                desiredProducts++;
+            }
+
             // check if shelve for this product is known, and is not already in basket
             if(toPickUp(productsKnowledge[i]))
             {
@@ -146,17 +158,40 @@ public class CustomerController : AgentController
         }
         else
         {
-            Transform target;
-
-            // Get a random aisle entry point as target
-            do
+            // Check if there were any desired products or if the customer is bored
+            if (desiredProducts < 0 || bored >= maxBored)
             {
-                target = aisleEntryPoints[UnityEngine.Random.Range(0, aisleEntryPoints.Count)].transform;
-            }
-            while(finalTarget == target);
+                // Get list of cashiers
+                GameObject[] cashiers = GameObject.FindGameObjectsWithTag("Cashier");
 
-            //finalTarget = target;
-            setTarget(target, false);
+                // Go to one cashier
+                Transform target;
+                Transform cashier = cashiers[UnityEngine.Random.Range(0, cashiers.Length)].transform;
+
+                // Get all standing points
+                foreach (Transform child in cashier)
+                {
+                    if (child.tag == "StandingPoint")
+                    {
+                        target = child;
+                        setTarget(target, false);
+                    }
+                }
+            }
+            else
+            {
+                Transform target;
+
+                // Get a random aisle entry point as target
+                do
+                {
+                    target = aisleEntryPoints[UnityEngine.Random.Range(0, aisleEntryPoints.Count)].transform;
+                }
+                while(finalTarget == target);
+
+                setTarget(target, false);
+                bored++; // make the customer more bored because of just wandering
+            }
         }
     }
 
@@ -247,7 +282,7 @@ public class CustomerController : AgentController
         {
             return;
         }
-            
+
         int index = 0;
 
         // count how many staff agents are invisible

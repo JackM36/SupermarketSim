@@ -38,7 +38,7 @@ public class AgentController : MonoBehaviour
     protected List<SteeringBehaviours.Behaviour> steeringBehaviours;
     protected Stack<Transform> stackedTargets;
 
-    //[HideInInspector]
+    [HideInInspector]
     public Transform finalTarget = null;
 
     protected void Awake() 

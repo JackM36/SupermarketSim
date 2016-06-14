@@ -10,9 +10,11 @@ public class ProductCustomerInfo : MonoBehaviour
     public bool toBuy;
     public int discount;
     public bool inBasket;
+    public bool toReturn;
+    public float pickedUpPrice;
     public GameObject onShelve;
 
-    public ProductCustomerInfo(string productCategoryName, float preference, float willingnessToPay, bool toBuy, int discount = 0, bool inBasket = false, GameObject onShelve = null)
+    public ProductCustomerInfo(string productCategoryName, float preference, float willingnessToPay, bool toBuy, int discount = 0, bool inBasket = false, bool toReturn = false, float pickedUpPrice = 0, GameObject onShelve = null)
     {
         this.productCategoryName = productCategoryName;
         this.preference = preference;
@@ -20,6 +22,8 @@ public class ProductCustomerInfo : MonoBehaviour
         this.toBuy = toBuy;
         this.discount = discount;
         this.inBasket = inBasket;
+        this.toReturn = toReturn;
+        this.pickedUpPrice = pickedUpPrice;
         this.onShelve = onShelve;
     }
 
@@ -31,6 +35,8 @@ public class ProductCustomerInfo : MonoBehaviour
         this.toBuy = false;
         this.discount = 0;
         this.inBasket = false;
+        this.toReturn = false;
+        this.pickedUpPrice = 0;
         this.onShelve = null;
     }
 
@@ -45,11 +51,18 @@ public class ProductCustomerInfo : MonoBehaviour
     public float getUtility(float price, float weightPref=1, float weightToBuy = 1, float weightHasDiscount = 1, float weightPlacement = 1, float weightPlanogram = 1)
     {
         // Calculate this product's utility based on the agent's knowledge about this product
-        int toBuyInt = toBuy ? 1 : 0;
-        int hasDiscountInt = discount > 0 ? 1 : 0;
-        float weightsTotal = weightToBuy + weightHasDiscount + weightHasDiscount + weightPlacement + weightPlanogram;
+        if (!inBasket)
+        {
+            int toBuyInt = toBuy ? 1 : 0;
+            int hasDiscountInt = discount > 0 ? 1 : 0;
+            float weightsTotal = weightToBuy + weightHasDiscount + weightHasDiscount + weightPlacement + weightPlanogram;
 
-        float utility = ((weightPref * pref) + (weightToBuy * toBuyInt) + (weightHasDiscount * hasDiscountInt)) / weightsTotal; // + placement + planogram
-        return utility + (1/price);
+            float utility = ((weightPref * pref) + (weightToBuy * toBuyInt) + (weightHasDiscount * hasDiscountInt)) / weightsTotal; // + placement + planogram
+            return utility + (1 / price);
+        }
+        else
+        {
+            return 0;
+        }
     }
 }
