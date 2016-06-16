@@ -9,6 +9,7 @@ public class MainUI : MonoBehaviour
     public Button stopButton;
     public Button fasterButton;
     public Button slowerButton;
+    public Text profitsTxt;
 
     [Header("Time")]
     public float maxTimeScale = 3f;
@@ -18,6 +19,19 @@ public class MainUI : MonoBehaviour
     [Header("Agents")]
     public AgentSpawner spawner;
 
+    GameManager gameManager;
+
+    void Awake()
+    {
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+    }
+
+    void Update()
+    {
+        // update profits
+        profitsTxt.text = "€ " + gameManager.profit.ToString();
+    }
+
     public void startSimulation()
     {
         // enable/disable appropriate UI elements
@@ -25,6 +39,9 @@ public class MainUI : MonoBehaviour
         stopButton.interactable = true;
         fasterButton.interactable = true;
         slowerButton.interactable = true;
+
+        // set to play mode
+        gameManager.gameMode = GameManager.mode.play;
 
         // start spawning agents
         spawner.spawnAgents();
@@ -37,6 +54,8 @@ public class MainUI : MonoBehaviour
         stopButton.interactable = false;
         fasterButton.interactable = false;
         slowerButton.interactable = false;
+
+        gameManager.gameMode = GameManager.mode.edit;
 
         Destroy(GameObject.Find("Customers"));
     }

@@ -22,10 +22,12 @@ public class CustomerController : AgentController
     public ProductCustomerInfo[] productsKnowledge;
 
     List<Transform> aisleEntryPoints;
+    GameManager gameManager;
     ProductsManager productsManager;
     DecisionTree decisionTree;
 
     float bored = 0;
+    bool finished = false;
 
     struct ShelveLevel
     {
@@ -44,6 +46,7 @@ public class CustomerController : AgentController
         base.Awake();
 
         // Get components
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
         decisionTree = transform.Find("DecisionTree").GetComponent<DecisionTree>();
         aisleEntryPoints = getAisleEntryPoints();
@@ -55,9 +58,13 @@ public class CustomerController : AgentController
     void FixedUpdate()
     {
         //base.FixedUpdate();
-        decisionTree.execute(this);
-        seeProductsOnShelves();
-        // TO DO: add closest staff function, when no known products are available
+        decisionTree.execute(this); // TO DO: break it more
+
+        if(!finished)
+        {
+            seeProductsOnShelves();
+            // TO DO: add closest staff function, when no known products are available
+        }
     }
 
     override public void move()
@@ -85,7 +92,7 @@ public class CustomerController : AgentController
         }
 
         // If the unit is close enough to the currentWaypoint, register it as reached
-        if (Vector3.Distance(transform.position, targetPos) < reachedTargetRadius)
+        if (isTargetReached(targetPos))
         {
             // node is already reached, so remove penalty for using this node
             NavMeshPathManager.removeUsedNodePenalty(path[currentWaypoint]);
@@ -101,6 +108,28 @@ public class CustomerController : AgentController
         }
     }
 
+    bool isTargetReached(Vector3 targetPos)
+    {
+        float distance = Vector3.Distance(transform.position, targetPos);
+
+        Vector3 dir = (targetPos - transform.position).normalized;
+        float dot = Vector3.Dot(dir, transform.forward);
+        float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
+
+        if (distance < reachedTargetRadius)
+        {
+            return true;
+        }
+
+        bool visible = Physics.Linecast(transform.position, targetPos);
+        if (distance < reachedTargetGraceRadius && angle > reachedTargetAngle && !visible)
+        {
+            return true;
+        }
+            
+        return false;
+    }
+
     override protected void onTarget()
     {
         // If final target is a shelve standing point, look on shelve
@@ -114,6 +143,12 @@ public class CustomerController : AgentController
 
     override public void getNewTarget()
     {
+        if (finished)
+        {
+            setTarget(gameManager.exit.transform, false);
+            return;
+        }
+
         if (stackedTargets.Count > 0)
         {
             setTarget(stackedTargets.Pop(), false);
@@ -177,6 +212,8 @@ public class CustomerController : AgentController
                         setTarget(target, false);
                     }
                 }
+
+                finished = true;
             }
             else
             {
@@ -244,7 +281,7 @@ public class CustomerController : AgentController
                 // Add new knowledge to list
                 productsKnowledge[shelve.productCategoryID].onShelve = onShelve;
 
-                Debug.Log(name + ": Saw " + productsManager.productCategories[shelve.productCategoryID].categoryName + " with utility " + productsKnowledge[shelve.productCategoryID].getUtility(getProductPrice(productsKnowledge[shelve.productCategoryID].onShelve.GetComponent<Shelve>()), productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram));
+                //Debug.Log(name + ": Saw " + productsManager.productCategories[shelve.productCategoryID].categoryName + " with utility " + productsKnowledge[shelve.productCategoryID].getUtility(getProductPrice(productsKnowledge[shelve.productCategoryID].onShelve.GetComponent<Shelve>()), productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram));
 
                 // Check if this shelve has a product the customer was going to pick up
                 if (toPickUp(productsKnowledge[shelve.productCategoryID]))
@@ -410,8 +447,9 @@ public class CustomerController : AgentController
         productsKnowledge[productID].inBasket = true;
         float price = getProductPrice(productsKnowledge[productID].onShelve.GetComponent<Shelve>());
         budget -= price;
+        gameManager.profit += price;
 
-        Debug.Log(name + ": Picked up " + productsManager.productCategories[productID].categoryName + " for " + price);
+        //Debug.Log(name + ": Picked up " + productsManager.productCategories[productID].categoryName + " for " + price);
 
         isBusy = false;
         enableSteeringAvoidance();
@@ -440,5 +478,13 @@ public class CustomerController : AgentController
         }
 
         return aisleEntryPoints;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (finished && other.transform.tag == "Exit")
+        {
+            Destroy(gameObject);
+        }
     }
 }

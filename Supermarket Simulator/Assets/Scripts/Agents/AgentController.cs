@@ -11,6 +11,8 @@ public class AgentController : MonoBehaviour
     [HideInInspector]
     public Vector3[] path;
     public float reachedTargetRadius = 1.5f;
+    public float reachedTargetGraceRadius = 10f;
+    public float reachedTargetAngle = 30f;
 
     [Header("Perception")]
     public float perceptionSightDistance;
@@ -38,7 +40,7 @@ public class AgentController : MonoBehaviour
     protected List<SteeringBehaviours.Behaviour> steeringBehaviours;
     protected Stack<Transform> stackedTargets;
 
-    [HideInInspector]
+    //[HideInInspector]
     public Transform finalTarget = null;
 
     protected void Awake() 
@@ -131,6 +133,9 @@ public class AgentController : MonoBehaviour
 
     void OnDrawGizmos()
     {
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(transform.position, transform.position + transform.forward * 5);
+
         if (showPathGizmo)
         {
             // Draw path lines

@@ -240,7 +240,7 @@ public class SteeringBehaviourItem
 {
     public bool enabled;
     public SteeringManager.SteeringBehaviourType type;
-    [Range(1,100)]
+    [Range(0,100)]
     public float priority;
 
     [HideInInspector]

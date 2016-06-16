@@ -18,6 +18,7 @@ public class AgentSpawner : MonoBehaviour
 
     string customerData;
     JsonData data;
+    GameManager gameManager;
     ProductsManager productsManager;
     List<Vector3> spawnPositions;
     Vector2[] spawnRange;
@@ -27,6 +28,7 @@ public class AgentSpawner : MonoBehaviour
     void Awake () 
     {
         // Get components
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
 	}
 	
@@ -79,6 +81,12 @@ public class AgentSpawner : MonoBehaviour
 
         for (int i = 0; i < totalCustomerNumber; i++)
         {
+            // first check if it still in play mode
+            if (gameManager.gameMode == GameManager.mode.edit)
+            {
+                break;
+            }
+
             // Create customer gameobject
             GameObject customer = (GameObject)Instantiate(customerModels[Random.Range(0, customerModels.Count)], new Vector3(0, 0, 0), Quaternion.identity);
             // set placeholder as parent

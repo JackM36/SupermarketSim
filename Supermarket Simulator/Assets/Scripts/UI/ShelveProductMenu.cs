@@ -28,6 +28,7 @@ public class ShelveProductMenu : MonoBehaviour
     int[] selectedPricesIDs = new int[3];
     int selectedProductID;
 
+    GameManager gameManager;
     ProductsManager productsManager;
 
     public bool enabled
@@ -59,6 +60,7 @@ public class ShelveProductMenu : MonoBehaviour
     void Awake()
     {
         // Get components
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
         productCategories = productsManager.productCategories;
 
@@ -68,7 +70,7 @@ public class ShelveProductMenu : MonoBehaviour
 
     void Update()
     {
-        if (!enabled)
+        if (gameManager.gameMode == GameManager.mode.edit && !enabled)
         {
             getClickedShelve();
         }
