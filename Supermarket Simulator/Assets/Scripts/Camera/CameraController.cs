@@ -44,6 +44,7 @@ public class CameraController : MonoBehaviour
             default:
                 break;
         }
+     
 
         // Refresh the focus point position
         RefreshFocusPoint();
@@ -95,6 +96,15 @@ public class CameraController : MonoBehaviour
         Vector3 movement = Vector3.zero;
         movement.x = InputManager.instance.GetPanAxis().x;
         movement.y = InputManager.instance.GetPanAxis().y;
+        if (Input.GetButton("Fire1"))
+        {
+            movement.z = 1;
+        }
+        else if (Input.GetButton("Fire2"))
+        {
+            movement.z = -1;
+        }
+        
         transform.Translate(movement * Time.deltaTime * panSpeed, Space.Self); // move based to self space.
     }
 
