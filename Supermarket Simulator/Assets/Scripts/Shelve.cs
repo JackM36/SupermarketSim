@@ -17,9 +17,16 @@ public class Shelve : MonoBehaviour
     public int[] shelveLevelPricesIDs;
     [HideInInspector]
     public List<Shelve> neighbourShelves;
+    [HideInInspector]
+    public bool toBoostPlacement = false;
+    [HideInInspector]
+    public int boostedBy = -1;
 
     List<Transform> standingPoints;
     float halfSize = 0;
+
+    GameManager gameManager;
+    ProductsManager productsManager;
 
     public enum NeighbourSensorAxis
     {
@@ -30,6 +37,10 @@ public class Shelve : MonoBehaviour
 
     void Awake()
     {
+        // Get components
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
+
         // Initialize shelve products
         productCategoryID = -1;
         productCategoryName = "";
@@ -101,6 +112,44 @@ public class Shelve : MonoBehaviour
             {
                 neighbourShelves.Add(hitRight.transform.GetComponent<Shelve>());
             }
+        }
+    }
+
+    // calculate distances from the current shelve to the target points of the supermarket
+    // return index of the point with the minimum distance
+    int getClosestPlanogramPointIndex()
+    {
+        float minDistance = float.MaxValue;
+        int minDistanceIndex = 0;
+
+        for (int i = 0; i < gameManager.planogramPoints.Length; i++)
+        {
+            float distance = Vector3.Distance(this.transform.position, gameManager.planogramPoints[i].transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                minDistanceIndex = i;
+            }
+        }
+
+        return minDistanceIndex;
+    }
+
+    public float getPlanogramBoost()
+    {
+        int planogramPointID = getClosestPlanogramPointIndex();
+        return productsManager.planogram[planogramPointID, productCategoryID];
+    }
+
+    public float getPlacementBoost()
+    {
+        if (toBoostPlacement)
+        {
+            return productsManager.productPosition[productCategoryID, boostedBy];
+        }
+        else
+        {
+            return 0;
         }
     }
 }

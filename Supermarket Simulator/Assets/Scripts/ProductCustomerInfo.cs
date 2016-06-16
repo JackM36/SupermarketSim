@@ -10,11 +10,12 @@ public class ProductCustomerInfo : MonoBehaviour
     public bool toBuy;
     public int discount;
     public bool inBasket;
+    public bool isAvailable;
     public bool toReturn;
     public float pickedUpPrice;
-    public GameObject onShelve;
+    public GameObject onShelve; // TO DO on many shelves
 
-    public ProductCustomerInfo(string productCategoryName, float preference, float willingnessToPay, bool toBuy, int discount = 0, bool inBasket = false, bool toReturn = false, float pickedUpPrice = 0, GameObject onShelve = null)
+    public ProductCustomerInfo(string productCategoryName, float preference, float willingnessToPay, bool toBuy, int discount = 0, bool inBasket = false, bool toReturn = false, bool isAvailable = true, float pickedUpPrice = 0, GameObject onShelve = null)
     {
         this.productCategoryName = productCategoryName;
         this.preference = preference;
@@ -23,6 +24,7 @@ public class ProductCustomerInfo : MonoBehaviour
         this.discount = discount;
         this.inBasket = inBasket;
         this.toReturn = toReturn;
+        this.isAvailable = isAvailable;
         this.pickedUpPrice = pickedUpPrice;
         this.onShelve = onShelve;
     }
@@ -36,6 +38,7 @@ public class ProductCustomerInfo : MonoBehaviour
         this.discount = 0;
         this.inBasket = false;
         this.toReturn = false;
+        this.isAvailable = true;
         this.pickedUpPrice = 0;
         this.onShelve = null;
     }
@@ -55,9 +58,12 @@ public class ProductCustomerInfo : MonoBehaviour
         {
             int toBuyInt = toBuy ? 1 : 0;
             int hasDiscountInt = discount > 0 ? 1 : 0;
+            print(onShelve);
+            float planogramBoost = onShelve.GetComponent<Shelve>().getPlanogramBoost();
+            float placementBoost = onShelve.GetComponent<Shelve>().getPlacementBoost();
             float weightsTotal = weightToBuy + weightHasDiscount + weightHasDiscount + weightPlacement + weightPlanogram;
 
-            float utility = ((weightPref * pref) + (weightToBuy * toBuyInt) + (weightHasDiscount * hasDiscountInt)) / weightsTotal; // + placement + planogram
+            float utility = ((weightPref * pref) + (weightToBuy * toBuyInt) + (weightHasDiscount * hasDiscountInt) + (weightPlanogram * planogramBoost) + (weightPlacement * placementBoost)) / weightsTotal;
             return utility + (1 / price);
         }
         else

@@ -28,6 +28,7 @@ public class CustomerController : AgentController
 
     float bored = 0;
     bool finished = false;
+    bool lookForStaff = false;
 
     struct ShelveLevel
     {
@@ -63,7 +64,10 @@ public class CustomerController : AgentController
         if(!finished)
         {
             seeProductsOnShelves();
-            // TO DO: add closest staff function, when no known products are available
+            if (lookForStaff)
+            {
+                getClosestStaff();
+            }
         }
     }
 
@@ -121,8 +125,8 @@ public class CustomerController : AgentController
             return true;
         }
 
-        bool visible = Physics.Linecast(transform.position, targetPos);
-        if (distance < reachedTargetGraceRadius && angle > reachedTargetAngle && !visible)
+        bool visible = !Physics.Linecast(transform.position, targetPos);
+        if (distance < reachedTargetGraceRadius && angle > reachedTargetAngle && visible)
         {
             return true;
         }
@@ -138,11 +142,19 @@ public class CustomerController : AgentController
             StartCoroutine(lookOnShelve(finalTarget.parent));
         }
 
+        // If final target is a staff, look on staff
+        if (finalTarget.tag == "Staff")
+        {
+            StartCoroutine(lookOnStaff(finalTarget));
+        }
+
         base.onTarget();
     }
 
     override public void getNewTarget()
     {
+        lookForStaff = false;
+
         if (finished)
         {
             setTarget(gameManager.exit.transform, false);
@@ -189,7 +201,6 @@ public class CustomerController : AgentController
         {
             Shelve shelve = productsKnowledge[minDistIndex].onShelve.GetComponent<Shelve>();
             setTarget(shelve.getAvailableStandingPoint(), false);
-            //finalTarget = shelve.getAvailableStandingPoint();
         }
         else
         {
@@ -228,6 +239,7 @@ public class CustomerController : AgentController
 
                 setTarget(target, false);
                 bored++; // make the customer more bored because of just wandering
+                lookForStaff = true;
             }
         }
     }
@@ -346,7 +358,8 @@ public class CustomerController : AgentController
             // check if closestStaff is visible
             if (Physics.Linecast(transform.position, closestStaff.transform.position))
             {
-                setTarget(closestStaff.transform, false); // TO DO: not exact position, go close to him
+                setTarget(closestStaff.transform, false);
+                return;
             }
             else
             {
@@ -358,7 +371,7 @@ public class CustomerController : AgentController
 
     public bool toPickUp(ProductCustomerInfo product)
     {
-        if (product.onShelve != null && !product.inBasket)
+        if (product.isAvailable && product.onShelve != null && !product.inBasket)
         {
             // Calculate utility
             float price = getProductPrice(product.onShelve.GetComponent<Shelve>());
@@ -440,7 +453,12 @@ public class CustomerController : AgentController
         for (int i = 0; i < shelve.neighbourShelves.Count; i++)
         {
             int neighbourProductID = shelve.neighbourShelves[i].productCategoryID;
-            // productsKnowledge[neighbourProductID] TO DO: ADD PLACEMENT BOOST
+
+            if (neighbourProductID != -1)
+            {
+                shelve.neighbourShelves[i].toBoostPlacement = true;
+                shelve.neighbourShelves[i].boostedBy = shelve.productCategoryID;
+            }
         }
 
         // Pickup the product and pay
@@ -450,6 +468,66 @@ public class CustomerController : AgentController
         gameManager.profit += price;
 
         //Debug.Log(name + ": Picked up " + productsManager.productCategories[productID].categoryName + " for " + price);
+
+        isBusy = false;
+        enableSteeringAvoidance();
+    }
+
+    IEnumerator lookOnStaff(Transform staffTransform)
+    {
+        // Get what product to ask about
+        float maxPref = 0;
+        int productID = 0;
+
+        for (int i = 0; i < productsKnowledge.Length; i++)
+        {
+            if (productsKnowledge[i].isAvailable && productsKnowledge[i].onShelve == null && !productsKnowledge[i].inBasket)
+            {
+                float pref = productsKnowledge[i].pref;
+                {
+                    maxPref = pref;
+                    productID = i;
+                }
+            }
+        }
+
+        isBusy = true;
+        disableSteeringAvoidance();
+
+        yield return new WaitForSeconds(3);
+
+        StaffController staff = staffTransform.GetComponent<StaffController>();
+        Transform shelve = staff.getClosestShelve(productID);
+
+        if (shelve != null)
+        {
+            setTarget(shelve, false);
+            bool visible = !Physics.Linecast(transform.position, shelve.position);
+            if (!visible)
+            {
+                // get visible aisle point
+                List<int> visibleAislePoints = new List<int>();
+
+                for (int i = 0; i < aisleEntryPoints.Count; i++)
+                {
+                    bool visibleAislePoint = !Physics.Linecast(transform.position, aisleEntryPoints[i].position);
+                    if (visibleAislePoint)
+                    {
+                        visibleAislePoints.Add(i);
+                    }
+                }
+
+                // get a random visible aisle point
+                int aislePointIndex = UnityEngine.Random.Range(0, visibleAislePoints.Count);
+                Transform aislePoint = aisleEntryPoints[aislePointIndex];
+
+                setTarget(aislePoint, true);
+            }
+        }
+        else
+        {
+            productsKnowledge[productID].isAvailable = false;
+        }
 
         isBusy = false;
         enableSteeringAvoidance();

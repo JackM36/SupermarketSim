@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     public float profit = 0;
     [HideInInspector]
     public mode gameMode;
+    [HideInInspector]
+    public GameObject[] planogramPoints;
 
     void Awake()
     {
