@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using LitJson;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif 
 
 public class AgentGenerator : MonoBehaviour
 {
@@ -51,7 +54,9 @@ public class AgentGenerator : MonoBehaviour
         System.IO.File.WriteAllText(@customersJsonPath, json.ToString());
 
         // refresh assets to show file, and print success log
+        #if UNITY_EDITOR
         AssetDatabase.Refresh();
+        #endif
         print("Customers JSON file created!");
     }
 

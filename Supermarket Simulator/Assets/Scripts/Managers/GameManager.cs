@@ -4,11 +4,17 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour 
 {
+    [Header("Cameras")]
+    public Camera mainCam;
+
     public GameObject entrance;
     public GameObject exit;
 
     [HideInInspector]
+    public Camera currentCamera;
+    [HideInInspector]
     public float profit = 0;
+    [HideInInspector]
     public List<GameObject> customers;
     [HideInInspector]
     public mode gameMode;
@@ -27,6 +33,7 @@ public class GameManager : MonoBehaviour
     {
         // Initializations
         gameMode = mode.edit;
+        currentCamera = mainCam;
         customers = new List<GameObject>();
     }
 

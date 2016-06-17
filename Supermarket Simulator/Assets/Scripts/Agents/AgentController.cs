@@ -118,8 +118,6 @@ public class AgentController : MonoBehaviour
 
     public void onPathRequestProcessed(Vector3[] newPath, bool foundPath)
     {
-        print(foundPath);
-
         // When a path was found, set the recieved path as the new path
         if (foundPath)
         {

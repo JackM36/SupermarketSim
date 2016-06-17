@@ -26,6 +26,8 @@ public class CustomerController : AgentController
     public bool[] shoppingList;
     [HideInInspector]
     public ProductCustomerInfo[] productsKnowledge;
+    [HideInInspector]
+    public CustomerAction action;
 
     List<Transform> aisleEntryPoints;
     GameManager gameManager;
@@ -48,6 +50,14 @@ public class CustomerController : AgentController
         }
     }
 
+    public enum CustomerAction
+    {
+        none,
+        lookingOnShelf,
+        lookingOnStaff,
+        goingToCashier
+    }
+
     void Awake()
     {
         base.Awake();
@@ -60,6 +70,7 @@ public class CustomerController : AgentController
 
         // Initializations
         stackedTargets = new Stack<Transform>();
+        action = CustomerAction.none;
     }
 
     void FixedUpdate()
@@ -70,7 +81,7 @@ public class CustomerController : AgentController
         if(!finished)
         {
             seeProductsOnShelves();
-            if (lookForStaff)
+            if (lookForStaff && (finalTarget == null || finalTarget.tag != "Staff"))
             {
                 getClosestStaff();
             }
@@ -164,6 +175,7 @@ public class CustomerController : AgentController
         if (finished)
         {
             setTarget(gameManager.exit.transform, false);
+            action = CustomerAction.none;
             return;
         }
 
@@ -231,6 +243,7 @@ public class CustomerController : AgentController
                 }
 
                 finished = true;
+                action = CustomerAction.goingToCashier;
             }
             else
             {
@@ -447,6 +460,7 @@ public class CustomerController : AgentController
     IEnumerator lookOnShelve(Transform shelveTransform)
     {
         isBusy = true;
+        action = CustomerAction.lookingOnShelf;
         disableSteeringAvoidance();
 
         yield return new WaitForSeconds(lookOnShelveTime);
@@ -476,6 +490,7 @@ public class CustomerController : AgentController
         //Debug.Log(name + ": Picked up " + productsManager.productCategories[productID].categoryName + " for " + price);
 
         isBusy = false;
+        action = CustomerAction.none;
         enableSteeringAvoidance();
     }
 
@@ -498,6 +513,7 @@ public class CustomerController : AgentController
         }
 
         isBusy = true;
+        action = CustomerAction.lookingOnStaff;
         disableSteeringAvoidance();
 
         yield return new WaitForSeconds(lookOnStaffTime);
@@ -536,6 +552,7 @@ public class CustomerController : AgentController
         }
 
         isBusy = false;
+        action = CustomerAction.none;
         enableSteeringAvoidance();
     }
 
