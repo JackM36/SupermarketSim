@@ -15,13 +15,14 @@ public class GameManager : MonoBehaviour
     [HideInInspector]
     public float profit = 0;
     [HideInInspector]
-    public List<GameObject> customers;
-    [HideInInspector]
     public mode gameMode;
     [HideInInspector]
     public GameObject[] planogramPoints;
 
+    List<GameObject> customersList;
+    List<GameObject> staffList;
     int customersCount = 0;
+    int staffCount = 0;
 
     public enum mode
     {
@@ -34,7 +35,8 @@ public class GameManager : MonoBehaviour
         // Initializations
         gameMode = mode.edit;
         currentCamera = mainCam;
-        customers = new List<GameObject>();
+        customersList = new List<GameObject>();
+        staffList = new List<GameObject>();
     }
 
     public int totalCustomers
@@ -45,15 +47,46 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public int totalStaff
+    {
+        get
+        {
+            return staffCount;
+        }
+    }
+
     public void addCustomer(GameObject customer)
     {
-        customers.Add(customer);
+        customersList.Add(customer);
         customersCount++;
+    }
+
+    public GameObject getStaff(int staffID)
+    {
+        return staffList[staffID];
+    }
+
+    public void addStaff(GameObject staff)
+    {
+        staffList.Add(staff);
+        staffCount++;
     }
 
     public void removeCustomer(int customerID)
     {
-        customers[customerID] = null;
+        customersList[customerID] = null;
         customersCount--;
+    }
+
+    public void clearCustomers()
+    {
+        customersList.Clear();
+        customersCount = 0;
+    }
+
+    public void clearStaff()
+    {
+        staffList.Clear();
+        staffCount = 0;
     }
 }
