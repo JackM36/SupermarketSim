@@ -12,6 +12,12 @@ public class CustomerController : AgentController
     [Header("Feelings")]
     public float maxBored = 10;
 
+    [Header("Times")]
+    public float lookOnShelveTime = 3;
+    public float lookOnStaffTime = 3;
+
+    [HideInInspector]
+    public int customerID;
     [HideInInspector]
     public float[] preferences;
     [HideInInspector]
@@ -84,7 +90,7 @@ public class CustomerController : AgentController
         }
 
         // if final target is a shelve standing point, use arrive, else use just seek
-        if (finalTarget.tag == "StandingPoint")
+        if (currentWaypoint == path.Length-1 && finalTarget.tag == "StandingPoint" || finalTarget.tag == "Staff")
         {
             steering.steeringBehaviours[0].enabled = false;
             steering.steeringBehaviours[1].enabled = true;
@@ -443,7 +449,7 @@ public class CustomerController : AgentController
         isBusy = true;
         disableSteeringAvoidance();
 
-        yield return new WaitForSeconds(3);
+        yield return new WaitForSeconds(lookOnShelveTime);
 
         // Get Shelve and the product ID
         Shelve shelve = shelveTransform.GetComponent<Shelve>();
@@ -494,7 +500,7 @@ public class CustomerController : AgentController
         isBusy = true;
         disableSteeringAvoidance();
 
-        yield return new WaitForSeconds(3);
+        yield return new WaitForSeconds(lookOnStaffTime);
 
         StaffController staff = staffTransform.GetComponent<StaffController>();
         Transform shelve = staff.getClosestShelve(productID);
@@ -562,6 +568,7 @@ public class CustomerController : AgentController
     {
         if (finished && other.transform.tag == "Exit")
         {
+            gameManager.removeCustomer(customerID);
             Destroy(gameObject);
         }
     }

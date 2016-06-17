@@ -9,6 +9,7 @@ public class MainUI : MonoBehaviour
     public Button stopButton;
     public Button fasterButton;
     public Button slowerButton;
+    public Text totalCustomersTxt;
     public Text profitsTxt;
 
     [Header("Time")]
@@ -28,8 +29,9 @@ public class MainUI : MonoBehaviour
 
     void Update()
     {
-        // update profits
+        // update customers, profits
         profitsTxt.text = "€ " + gameManager.profit.ToString();
+        totalCustomersTxt.text = gameManager.totalCustomers.ToString();
     }
 
     public void startSimulation()
@@ -58,6 +60,8 @@ public class MainUI : MonoBehaviour
         gameManager.gameMode = GameManager.mode.edit;
 
         Destroy(GameObject.Find("Customers"));
+        gameManager.customers.Clear();
+        gameManager.profit = 0;
     }
 
     public void goFaster()

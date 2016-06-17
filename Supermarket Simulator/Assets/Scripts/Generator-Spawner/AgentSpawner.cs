@@ -101,6 +101,7 @@ public class AgentSpawner : MonoBehaviour
             customer.GetComponent<SteeringManager>().maxSteer = float.Parse(data[i]["maxSteer"].ToString());
             customer.GetComponent<SteeringManager>().sightRadius = float.Parse(data[i]["sightRadius"].ToString());
             customer.GetComponent<SteeringManager>().slowDownRadius = float.Parse(data[i]["slowDownRadius"].ToString());
+            customer.GetComponent<CustomerController>().customerID = i;
             customer.GetComponent<CustomerController>().reachedTargetRadius = float.Parse(data[i]["reachedTargetRadius"].ToString());
             customer.GetComponent<CustomerController>().budget = float.Parse(data[i]["budget"].ToString());
 
@@ -115,6 +116,9 @@ public class AgentSpawner : MonoBehaviour
             }
 
             customer.GetComponent<CustomerController>().productsKnowledge = productKnowledge;
+
+            // add customer to game manager
+            gameManager.addCustomer(customer);
 
             // wait until next batch of customers are generated
             int customerNumberPerSpawn = Random.Range((int)customerNumberPerSpawnRange.x, (int)customerNumberPerSpawnRange.y+1);

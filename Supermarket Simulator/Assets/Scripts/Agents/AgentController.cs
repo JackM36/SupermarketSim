@@ -118,6 +118,8 @@ public class AgentController : MonoBehaviour
 
     public void onPathRequestProcessed(Vector3[] newPath, bool foundPath)
     {
+        print(foundPath);
+
         // When a path was found, set the recieved path as the new path
         if (foundPath)
         {
@@ -126,6 +128,10 @@ public class AgentController : MonoBehaviour
             onPath = true;
             //requestedPath = false;
         }
+        else
+        {
+            getNewTarget();
+        }
     }
 
     public virtual void getNewTarget()
@@ -133,9 +139,6 @@ public class AgentController : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + transform.forward * 5);
-
         if (showPathGizmo)
         {
             // Draw path lines
