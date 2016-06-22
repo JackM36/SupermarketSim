@@ -11,8 +11,11 @@ public class MainUI : MonoBehaviour
     public Button slowerButton;
     public Button addStaffButton;
     public Button clearStaffButton;
-    public Text totalCustomersTxt;
+    public Text customersTxt;
     public Text profitsTxt;
+    public RectTransform totalCustomersPanel;
+    public Slider totalCustomersSlider;
+    public Text totalCustomersTxt;
 
     [Header("Time")]
     public float maxTimeScale = 3f;
@@ -21,11 +24,13 @@ public class MainUI : MonoBehaviour
 
     [Header("Agents")]
     public GameObject staffPrefab;
+    public GameObject staffPlaceholderPrefab;
     public AgentSpawner spawner;
     public LayerMask addStaffRayLayers;
 
     GameManager gameManager;
-    bool addingStaff = false;
+    [HideInInspector]
+    public bool addingStaff = false;
     GameObject staffToBePlaced = null;
 
     void Awake()
@@ -37,7 +42,7 @@ public class MainUI : MonoBehaviour
     {
         // update customers, profits
         profitsTxt.text = "€ " + gameManager.profit.ToString();
-        totalCustomersTxt.text = gameManager.totalCustomers.ToString();
+        customersTxt.text = gameManager.totalCustomers.ToString();
 
         if (addingStaff)
         {
@@ -55,7 +60,7 @@ public class MainUI : MonoBehaviour
         {
             if (staffToBePlaced == null)
             {
-                staffToBePlaced = (GameObject)Instantiate(staffPrefab, hit.point, staffPrefab.transform.rotation);
+                staffToBePlaced = (GameObject)Instantiate(staffPlaceholderPrefab, hit.point, staffPrefab.transform.rotation);
             }
 
             Vector3 placingPos = new Vector3(hit.point.x, hit.point.y + 1.1f, hit.point.z); // temporary. This should be done with raycasting to place it exactly on the ground. This is just a quick solution
@@ -78,6 +83,13 @@ public class MainUI : MonoBehaviour
             {
                 staffToBePlaced.transform.FindChild("ToPlaceHalo").gameObject.SetActive(false);
             }
+
+            //staffToBePlaced.transform.FindChild("ToPlaceHalo").rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+        }
+        else
+        {
+            Destroy(staffToBePlaced);
+            staffToBePlaced = null;
         }
     }
 
@@ -90,6 +102,7 @@ public class MainUI : MonoBehaviour
         slowerButton.interactable = true;
         addStaffButton.gameObject.SetActive(false);
         clearStaffButton.gameObject.SetActive(false);
+        totalCustomersPanel.gameObject.SetActive(false);
 
         if (addingStaff)
         {
@@ -112,6 +125,7 @@ public class MainUI : MonoBehaviour
         slowerButton.interactable = false;
         addStaffButton.gameObject.SetActive(true);
         clearStaffButton.gameObject.SetActive(true);
+        totalCustomersPanel.gameObject.SetActive(true);
 
         gameManager.gameMode = GameManager.mode.edit;
 
@@ -178,5 +192,11 @@ public class MainUI : MonoBehaviour
         }
 
         gameManager.clearStaff();
+    }
+
+    public void customersSlider_OnValueChanged()
+    {
+        totalCustomersTxt.text = totalCustomersSlider.value.ToString();
+        spawner.totalCustomerNumber = (int)totalCustomersSlider.value;
     }
 }

@@ -60,7 +60,7 @@ public class ProductCustomerInfo : MonoBehaviour
             int hasDiscountInt = discount > 0 ? 1 : 0;
             float planogramBoost = onShelve.GetComponent<Shelve>().getPlanogramBoost();
             float placementBoost = onShelve.GetComponent<Shelve>().getPlacementBoost();
-            float weightsTotal = weightToBuy + weightHasDiscount + weightHasDiscount + weightPlacement + weightPlanogram;
+            float weightsTotal = weightPref + weightToBuy + weightHasDiscount + weightPlacement + weightPlanogram;
 
             float utility = ((weightPref * pref) + (weightToBuy * toBuyInt) + (weightHasDiscount * hasDiscountInt) + (weightPlanogram * planogramBoost) + (weightPlacement * placementBoost)) / weightsTotal;
             return utility + (1 / price);

@@ -9,7 +9,7 @@ public class DecisionTreeCondition_OnPath : DecisionTreeCondition
         CustomerController customer = obj as CustomerController;
 
         // Check if customer is already on a target
-        if (customer.onPath && customer.currentWaypoint < customer.path.Length)
+        if (!customer.isBusy && customer.onPath && customer.currentWaypoint < customer.path.Length)
         {
             return true;
         }

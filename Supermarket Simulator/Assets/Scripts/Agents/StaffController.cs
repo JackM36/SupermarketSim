@@ -11,18 +11,17 @@ public class StaffController : AgentController
     {
         // Get components
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
+    }
 
-        // Initializations
+    public void getOnShelves()
+    {
+        // Initialize lists
         onShelves = new List<GameObject>[productsManager.productCategories.Length];
         for (int i = 0; i < onShelves.Length; i++)
         {
             onShelves[i] = new List<GameObject>();
         }
-        getOnShelves();
-    }
 
-    void getOnShelves()
-    {
         GameObject[] shelves = GameObject.FindGameObjectsWithTag("Shelve");
 
         for (int i = 0; i < shelves.Length; i++)
@@ -35,7 +34,7 @@ public class StaffController : AgentController
         }
     }
 
-    public Transform getClosestShelve(int productID)
+    public GameObject getClosestShelve(int productID)
     {
         float minDistance = float.MaxValue;
         int minDistanceIndex = -1;
@@ -52,7 +51,7 @@ public class StaffController : AgentController
 
         if (minDistanceIndex != -1)
         {
-            return onShelves[productID][minDistanceIndex].GetComponent<Shelve>().getAvailableStandingPoint();
+            return onShelves[productID][minDistanceIndex];
         }
         else
         {

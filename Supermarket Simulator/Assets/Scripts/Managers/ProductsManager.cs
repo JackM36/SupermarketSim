@@ -10,26 +10,29 @@ public class ProductsManager : MonoBehaviour
     public float weightHasDiscount = 0.2f;
     public float weightPlacement = 0.3f;
     public float weightPlanogram = 0.2f;
+    public float boostEyeLevelShelve = 0.5f;
+    public float boostHandsLevelShelve = 0.2f;
+    public float boostFeetLevelShelve = 0.1f;
 
     //TODO fix position and number of products in array
     public float[,] productPosition = new float[10, 10] {
-        { 1f, 0.8f, 0.6f, 0.5f, 0.1f, 0.2f, 0.5f, 0.5f, 0.1f, 0.2f },//meat
-        { 0.8f, 1f, 0.5f, 0.4f, 0.2f, 0.2f, 0.3f, 0.2f, 0.1f, 0.1f },//fruitsvegetables
-        { 0.6f, 0.5f, 1f, 0.6f, 0.3f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f },//dairy
-        { 0.5f, 0.4f, 0.6f, 1f, 0.8f, 0.2f, 0.3f, 0.3f, 0.1f, 0.1f },//bakery
-        { 0.1f, 0.2f, 0.3f, 0.8f, 1f, 0.5f, 0.3f, 0.5f, 0.1f, 0.2f },//candy
-        { 0.2f, 0.2f, 0.2f, 0.2f, 0.5f, 1f, 0.7f, 0.8f, 0.1f, 0.2f },//chips
-        { 0.5f, 0.3f, 0.2f, 0.3f, 0.3f, 0.7f, 1f, 0.8f, 0.5f, 0.4f },//alcohol
-        { 0.5f, 0.2f, 0.2f, 0.3f, 0.5f, 0.8f, 0.8f, 1f, 0.3f, 0.4f },//softdrinks
-        { 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.5f, 0.3f, 1f, 0.7f },//cleaning
-        { 0.1f, 0.1f, 0.2f, 0.1f, 0.2f, 0.2f, 0.4f, 0.4f, 0.7f, 1f },//paper
+        { 1f, 1.2f, 1.8f, 1.6f, 1.5f, 1.5f, 1.1f, 1.2f, 1.1f, 1.5f },//meat
+        { 1.2f, 1f, 1.8f, 1.3f, 1.3f, 1.4f, 1.2f, 1.2f, 1.1f, 1.2f },//fruits
+        { 1.8f, 1.8f, 1f, 1.5f, 1.4f, 1.1f, 1.2f, 1.2f, 1.1f, 1.2f },//vegetables
+        { 1.5f, 1.3f, 1.5f, 1f, 1.6f, 1.3f, 1.3f, 1.2f, 1.1f, 1.2f },//dairy
+        { 1.5f, 1.3f, 1.4f, 1.6f, 1f, 1.3f, 1.8f, 1.2f, 1.1f, 1.3f },//bakery
+        { 1.5f, 1.4f, 1.1f, 1.3f, 1.3f, 1f, 1.3f, 1.7f, 1.5f, 1.8f },//alcohol
+        { 1.1f, 1.2f, 1.2f, 1.3f, 1.8f, 1.3f, 1f, 1.5f, 1.1f, 1.5f },//candy
+        { 1.2f, 1.2f, 1.2f, 1.2f, 1.2f, 1.7f, 1.5f, 1f, 1.1f, 1.8f },//chips
+        { 1.1f, 1.1f, 1.1f, 1.1f, 1.1f, 1.5f, 1.1f, 1.1f, 1f, 1.3f },//cleaning
+        { 1.5f, 1.2f, 1.2f, 1.2f, 1.3f, 1.8f, 1.5f, 1.8f, 1.3f, 1f },//softdrinks
     };
 
     //TODO fix position and number of products in array
     public float[,] planogram = new float[3, 10] {
-        { 0.8f, 1f, 0.6f, 0.8f, 0.2f, 0.2f, 0.1f, 0.1f, 0.1f, 0.1f },//distance_entrance
-        { 0.6f, 0.3f, 0.7f, 0.6f, 0.5f, 0.5f, 0.4f, 0.4f, 0.1f, 0.2f },//distance_middle
-        { 0.2f, 0.2f, 0.3f, 0.8f, 0.8f, 0.7f, 0.6f, 0.6f, 0.7f, 0.7f },//distance_cashiers   
+        { 1.8f, 1f, 1f, 1.6f, 1.8f, 1.1f, 1.2f, 1.2f, 1.1f, 1.1f},//distance_entrance
+        { 1.6f, 1.3f, 1.3f, 1.7f, 1.6f, 1.5f, 1.5f, 1.4f, 1.1f, 1.4f},//distance_middle
+        { 1.2f, 1.2f, 1.2f, 1.3f, 1.8f, 1.8f, 1.7f, 1.6f, 1.7f, 1.6f,},//distance_cashiers   
     };
 
 }

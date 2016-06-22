@@ -16,13 +16,14 @@ public class GameManager : MonoBehaviour
     public float profit = 0;
     [HideInInspector]
     public mode gameMode;
-    [HideInInspector]
     public GameObject[] planogramPoints;
 
     List<GameObject> customersList;
     List<GameObject> staffList;
     int customersCount = 0;
     int staffCount = 0;
+
+    bool initializedStaff = false;
 
     public enum mode
     {
@@ -52,6 +53,29 @@ public class GameManager : MonoBehaviour
         get
         {
             return staffCount;
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+
+        // Initialize or disable staff
+        if (gameMode == mode.play && !initializedStaff)
+        {
+            for (int i = 0; i < staffList.Count; i++)
+            {
+                staffList[i].GetComponent<StaffController>().getOnShelves();
+            }
+
+            initializedStaff = true;
+        }
+        else if (gameMode == mode.edit && initializedStaff)
+        {
+            initializedStaff = false;
         }
     }
 

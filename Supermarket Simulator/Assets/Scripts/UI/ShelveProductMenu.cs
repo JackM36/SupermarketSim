@@ -30,6 +30,7 @@ public class ShelveProductMenu : MonoBehaviour
 
     GameManager gameManager;
     ProductsManager productsManager;
+    MainUI mainUI;
 
     public bool enabled
     {
@@ -62,6 +63,7 @@ public class ShelveProductMenu : MonoBehaviour
         // Get components
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         productsManager = GameObject.Find("ProductsManager").GetComponent<ProductsManager>();
+        mainUI = GameObject.Find("MainUI").GetComponent<MainUI>();
         productCategories = productsManager.productCategories;
 
         // Initializations
@@ -70,7 +72,7 @@ public class ShelveProductMenu : MonoBehaviour
 
     void Update()
     {
-        if (gameManager.gameMode == GameManager.mode.edit && !enabled)
+        if (gameManager.gameMode == GameManager.mode.edit && !mainUI.addingStaff && !enabled)
         {
             getClickedShelve();
         }
@@ -93,11 +95,25 @@ public class ShelveProductMenu : MonoBehaviour
         // calculate the next selectedID based on if the NEXT or PREVIOUS button was pressed
         if (navDir == NavigationDirection.next)
         {
-            selectedProductID = mod((selectedProductID + 1), productCategories.Length);
+            if (selectedProduct != null)
+            {
+                selectedProductID = mod((selectedProductID + 1), productCategories.Length);
+            }
+            else
+            {
+                selectedProductID = 0;
+            }
         }
         else
         {
-            selectedProductID = mod((selectedProductID - 1), productCategories.Length);
+            if (selectedProduct != null)
+            {
+                selectedProductID = mod((selectedProductID - 1), productCategories.Length);
+            }
+            else
+            {
+                selectedProductID = productCategories.Length-1;
+            }
         }
 
         selectedProduct = productCategories[selectedProductID];

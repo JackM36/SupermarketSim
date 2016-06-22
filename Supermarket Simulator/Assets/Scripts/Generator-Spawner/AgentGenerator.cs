@@ -9,7 +9,8 @@ using UnityEditor;
 public class AgentGenerator : MonoBehaviour
 {
     [Header("JSON files")]
-    public string customersJsonPath = "Assets/Files/customersData.json";
+    public string customersJsonPath = "Files/";
+    public string customersJsonFilename = "customersData.json";
 
     [Header("Customers")]
     public int customersNumber;
@@ -51,7 +52,11 @@ public class AgentGenerator : MonoBehaviour
 
         // convert list to json object and write it to file
         JsonData json = JsonMapper.ToJson(_data);
-        System.IO.File.WriteAllText(@customersJsonPath, json.ToString());
+        #if UNITY_EDITOR
+        System.IO.File.WriteAllText("Assets/" + customersJsonPath + customersJsonFilename, json.ToString());
+        #else
+        System.IO.File.WriteAllText(Application.dataPath + "/" + customersJsonPath + customersJsonFilename, json.ToString());
+        #endif
 
         // refresh assets to show file, and print success log
         #if UNITY_EDITOR

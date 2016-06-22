@@ -7,7 +7,8 @@ using System.Collections;
 public class AgentSpawner : MonoBehaviour 
 {
     [Header("JSON files")]
-    public string customersJsonPath = "Assets/Files/customersData.json";
+    public string customersJsonPath = "Files/";
+    public string customersJsonFilename = "customersData.json";
 
     [Header("Customers")]
     public GameObject spawnArea;
@@ -63,7 +64,7 @@ public class AgentSpawner : MonoBehaviour
     {
         try
         {
-            customerData = System.IO.File.ReadAllText(customersJsonPath);
+            customerData = System.IO.File.ReadAllText(Application.dataPath + "/" + customersJsonPath + customersJsonFilename);
         }
         catch (System.IO.FileNotFoundException)
         {

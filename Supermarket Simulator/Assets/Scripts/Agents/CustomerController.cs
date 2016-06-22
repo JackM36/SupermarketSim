@@ -37,6 +37,7 @@ public class CustomerController : AgentController
     float bored = 0;
     bool finished = false;
     bool lookForStaff = false;
+    int askForProduct = -1;
 
     struct ShelveLevel
     {
@@ -81,7 +82,7 @@ public class CustomerController : AgentController
         if(!finished)
         {
             seeProductsOnShelves();
-            if (lookForStaff && (finalTarget == null || finalTarget.tag != "Staff"))
+            if (lookForStaff && (finalTarget == null || (finalTarget.tag != "Staff" && finalTarget.tag != "StandingPoint")))
             {
                 getClosestStaff();
             }
@@ -90,6 +91,9 @@ public class CustomerController : AgentController
 
     override public void move()
     {
+        //TEMP FIX
+        transform.position = new Vector3(transform.position.x, 1.431488f, transform.position.z);
+
         // get position of current waypoint and final target
         Vector3 targetPos = new Vector3(path[currentWaypoint].x, transform.position.y, path[currentWaypoint].z);
 
@@ -110,6 +114,15 @@ public class CustomerController : AgentController
         {
             steering.steeringBehaviours[0].enabled = true;
             steering.steeringBehaviours[1].enabled = false;
+        }
+
+        if (finalTarget.tag == "Staff")
+        {
+            StaffController staff = finalTarget.GetComponent<StaffController>();
+            if (staff.isBusy)
+            {
+                getNewTarget();
+            }
         }
 
         // If the unit is close enough to the currentWaypoint, register it as reached
@@ -162,7 +175,11 @@ public class CustomerController : AgentController
         // If final target is a staff, look on staff
         if (finalTarget.tag == "Staff")
         {
-            StartCoroutine(lookOnStaff(finalTarget));
+            StaffController staff = finalTarget.GetComponent<StaffController>();
+            if (!staff.isBusy)
+            {
+                StartCoroutine(lookOnStaff(finalTarget));
+            }
         }
 
         base.onTarget();
@@ -265,7 +282,7 @@ public class CustomerController : AgentController
 
     void setTarget(Transform newtarget, bool stackPrevious = false)
     {
-        if (stackPrevious)
+        if (finalTarget != null && stackPrevious)
         {
             stackedTargets.Push(finalTarget);
         }
@@ -318,7 +335,13 @@ public class CustomerController : AgentController
                 if (toPickUp(productsKnowledge[shelve.productCategoryID]))
                 {
                     // if this shelve was already the target of the customer, just do nothing
-                    if (finalTarget != null && finalTarget.tag != "StandingPoint" && finalTarget.parent.GetComponent<Shelve>() != shelve)
+                    //if (finalTarget != null && finalTarget.tag != "StandingPoint" && finalTarget.parent.GetComponent<Shelve>() != null && finalTarget.parent.GetComponent<Shelve>() != shelve)
+                    //if (finalTarget != null && finalTarget.parent.GetComponent<Shelve>() != null && finalTarget.parent.GetComponent<Shelve>() != shelve)
+                    if (finalTarget != null && finalTarget.tag == "StandingPoint" && finalTarget.parent.GetComponent<Shelve>() != null && finalTarget.parent.GetComponent<Shelve>() == shelve)
+                    {
+                        return;
+                    }
+                    else
                     {
                         setTarget(shelve.getAvailableStandingPoint(), true);
                     }
@@ -332,58 +355,79 @@ public class CustomerController : AgentController
 
     void getClosestStaff()
     {
-        // TO DO: Check if staff is busy
+        // Check if there is a product to ask about
+        float maxPref = 0;
+        int productID = -1;
 
-        // find staff agents within a radius
-        Collider[] colliders = Physics.OverlapSphere(transform.position, perceptionSightDistance, staffLayer);
-        float minDistance = perceptionSightDistance;
-
-        // visibility table,-1: not visible, 0: unknown visibility, 1: visible
-        int[] staffVisibility = new int[colliders.Length];
-        GameObject closestStaff;
-
-        if (colliders.Length > 0)
+        for (int i = 0; i < productsKnowledge.Length; i++)
         {
-            closestStaff = colliders[0].gameObject;
-        }
-        else
-        {
-            return;
-        }
-
-        int index = 0;
-
-        // count how many staff agents are invisible
-        int count = 0;
-
-        while (count < colliders.Length)
-        {
-            // find closest staff
-            for (int i = 1; i < colliders.Length; i++)
+            if (productsKnowledge[i].isAvailable && productsKnowledge[i].onShelve == null && !productsKnowledge[i].inBasket)
             {
-                if (staffVisibility[i] > -1)
+                float pref = productsKnowledge[i].pref;
+                if(pref > maxPref)
                 {
-                    // find distance from customer to each staff
-                    float distance = Vector3.Distance(transform.position, colliders[i].transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestStaff = colliders[i].gameObject;
-                        index = i;
-                    }
+                    maxPref = pref;
+                    productID = i;
                 }
             }
+        }
 
-            // check if closestStaff is visible
-            if (Physics.Linecast(transform.position, closestStaff.transform.position))
+        // if there is a product to ask about, find the closest staff
+        if (productID != -1)
+        {
+            askForProduct = productID;
+
+            // find staff agents within a radius
+            Collider[] colliders = Physics.OverlapSphere(transform.position, perceptionSightDistance, staffLayer);
+            float minDistance = perceptionSightDistance;
+
+            // visibility table,-1: not visible, 0: unknown visibility, 1: visible
+            int[] staffVisibility = new int[colliders.Length];
+            GameObject closestStaff;
+
+            if (colliders.Length > 0)
             {
-                setTarget(closestStaff.transform, false);
-                return;
+                closestStaff = colliders[0].gameObject;
             }
             else
             {
-                staffVisibility[index] = -1;
-                count++;
+                return;
+            }
+
+            int index = 0;
+
+            // count how many staff agents are invisible
+            int count = 0;
+
+            while (count < colliders.Length)
+            {
+                // find closest staff
+                for (int i = 1; i < colliders.Length; i++)
+                {
+                    if (staffVisibility[i] > -1)
+                    {
+                        // find distance from customer to each staff
+                        float distance = Vector3.Distance(transform.position, colliders[i].transform.position);
+                        if (distance < minDistance)
+                        {
+                            minDistance = distance;
+                            closestStaff = colliders[i].gameObject;
+                            index = i;
+                        }
+                    }
+                }
+
+                // check if closestStaff is visible and not busy
+                if (Physics.Linecast(transform.position, closestStaff.transform.position) && !closestStaff.GetComponent<StaffController>().isBusy)
+                {
+                    setTarget(closestStaff.transform, false);
+                    return;
+                }
+                else
+                {
+                    staffVisibility[index] = -1;
+                    count++;
+                }
             }
         }
     }
@@ -395,7 +439,7 @@ public class CustomerController : AgentController
             // Calculate utility
             float price = getProductPrice(product.onShelve.GetComponent<Shelve>());
             float utility = product.getUtility(price, productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram);
-            float minUtility = 0.3f; // TEEEEEEEMP
+            float minUtility = 0.4f; // TEEEEEEEMP
 
             // Decide if this product should be picked up
             if (utility >= minUtility && price != -1)
@@ -417,34 +461,63 @@ public class CustomerController : AgentController
     {
         int productID = shelve.productCategoryID;
         float pref = productsKnowledge[productID].pref;
-        float prefRadians = pref * Mathf.PI;
+        float prefDegrees = pref * 720;
+        float prefRadians = prefDegrees * (Mathf.PI/180);
 
-        prefRadians = (3 + Mathf.Cos(prefRadians)) / 4;
+        //prefRadians = (3 + Mathf.Cos(prefRadians)) / 4;
+
+        //float[] shelvePrices = productsManager.productCategories[productID].prices;
+        float[] shelvePrices = shelve.shelveLevelPrices;
+        float[] shelvePricesSorted = new float[3];
+        Array.Copy(shelvePrices, shelvePricesSorted, shelvePrices.Length);
+        Array.Sort<float>(shelvePricesSorted, (x,y) => x.CompareTo(y));
 
         ShelveLevel[] levels = new ShelveLevel[3];
-        float[] shelvePrices = productsManager.productCategories[productID].prices;
+
+        float[] shelveLevelsBoosts = new float[3];
+        shelveLevelsBoosts[0] = productsManager.boostEyeLevelShelve;
+        shelveLevelsBoosts[1] = productsManager.boostHandsLevelShelve;
+        shelveLevelsBoosts[2] = productsManager.boostFeetLevelShelve ;
+
         int discount = productsManager.productCategories[productID].discount;
 
+        // TODO add boosts
         if (prefRadians < Mathf.PI)
         {
-            levels[0] = new ShelveLevel(shelvePrices[2] - ((shelvePrices[2]*discount)/100), prefRadians);
-            levels[1] = new ShelveLevel(shelvePrices[1] - ((shelvePrices[1]*discount)/100), 1 - prefRadians);
-            levels[2] = new ShelveLevel(shelvePrices[0] - ((shelvePrices[0]*discount)/100), 0);
+            levels[0] = new ShelveLevel(shelvePricesSorted[0], pref);
+            levels[1] = new ShelveLevel(shelvePricesSorted[1], 1 - pref);
+            levels[2] = new ShelveLevel(shelvePricesSorted[2], 0);
         }
         else if (prefRadians > Mathf.PI && prefRadians < Mathf.PI*3)
         {
-            levels[0] = new ShelveLevel(shelvePrices[1] - ((shelvePrices[1]*discount)/100), prefRadians);
-            levels[1] = new ShelveLevel(shelvePrices[0] - ((shelvePrices[0]*discount)/100), 1 - prefRadians);
-            levels[2] = new ShelveLevel(shelvePrices[2] - ((shelvePrices[2]*discount)/100), 0);
+            levels[0] = new ShelveLevel(shelvePricesSorted[1], pref);
+            levels[1] = new ShelveLevel(shelvePricesSorted[2], 1 - pref);
+            levels[2] = new ShelveLevel(shelvePricesSorted[0], 0);
         }
         else if (prefRadians > Mathf.PI*3 && prefRadians < Mathf.PI*4)
         {
-            levels[0] = new ShelveLevel(shelvePrices[0] - ((shelvePrices[0]*discount)/100), prefRadians);
-            levels[1] = new ShelveLevel(shelvePrices[1] - ((shelvePrices[1]*discount)/100), 1 - prefRadians);
-            levels[2] = new ShelveLevel(shelvePrices[2] - ((shelvePrices[2]*discount)/100), 0);
+            levels[0] = new ShelveLevel(shelvePricesSorted[2], pref);
+            levels[1] = new ShelveLevel(shelvePricesSorted[1], 1 - pref);
+            levels[2] = new ShelveLevel(shelvePricesSorted[0], 0);
         }
 
-        Array.Sort<ShelveLevel>(levels, (x,y) => x.shelveLevelPref.CompareTo(y.shelveLevelPref));
+        // add discount and boosts
+        for (int i = 0; i < levels.Length; i++)
+        {
+            levels[i].shelveLevelPrice -= (levels[i].shelveLevelPrice * discount) / 100;
+
+            for (int j = 0; j < levels.Length; j++)
+            {
+                if (levels[i].shelveLevelPrice == shelvePrices[j])
+                {
+                    levels[i].shelveLevelPref += shelveLevelsBoosts[j];
+                    break;
+                }
+            }
+        }
+
+        Array.Sort<ShelveLevel>(levels, (x,y) => -x.shelveLevelPref.CompareTo(y.shelveLevelPref));
+
         for (int i = 0; i < levels.Length; i++)
         {
             if (levels[i].shelveLevelPrice <= budget)
@@ -459,6 +532,13 @@ public class CustomerController : AgentController
 
     IEnumerator lookOnShelve(Transform shelveTransform)
     {
+        // Check once again before product is picked up. (budget could be spent on the way to this shelve)
+        if (!toPickUp(productsKnowledge[shelveTransform.GetComponent<Shelve>().productCategoryID]))
+        {
+            isBusy = false;
+            return true;
+        }
+
         isBusy = true;
         action = CustomerAction.lookingOnShelf;
         disableSteeringAvoidance();
@@ -496,35 +576,26 @@ public class CustomerController : AgentController
 
     IEnumerator lookOnStaff(Transform staffTransform)
     {
-        // Get what product to ask about
-        float maxPref = 0;
-        int productID = 0;
-
-        for (int i = 0; i < productsKnowledge.Length; i++)
-        {
-            if (productsKnowledge[i].isAvailable && productsKnowledge[i].onShelve == null && !productsKnowledge[i].inBasket)
-            {
-                float pref = productsKnowledge[i].pref;
-                {
-                    maxPref = pref;
-                    productID = i;
-                }
-            }
-        }
-
+        StaffController staff = staffTransform.GetComponent<StaffController>();
+        staff.isBusy = true;
         isBusy = true;
         action = CustomerAction.lookingOnStaff;
         disableSteeringAvoidance();
 
         yield return new WaitForSeconds(lookOnStaffTime);
 
-        StaffController staff = staffTransform.GetComponent<StaffController>();
-        Transform shelve = staff.getClosestShelve(productID);
+        GameObject shelveObj = staff.getClosestShelve(askForProduct);
 
-        if (shelve != null)
+        if (shelveObj != null)
         {
-            setTarget(shelve, false);
-            bool visible = !Physics.Linecast(transform.position, shelve.position);
+            // get shelve
+            Shelve shelve = shelveObj.GetComponent<Shelve>();
+
+            // Add it to customer's knowledge
+            productsKnowledge[askForProduct].onShelve = shelve.gameObject;
+
+            setTarget(shelve.getAvailableStandingPoint(), false);
+            bool visible = !Physics.Linecast(transform.position, shelveObj.transform.position);
             if (!visible)
             {
                 // get visible aisle point
@@ -548,8 +619,10 @@ public class CustomerController : AgentController
         }
         else
         {
-            productsKnowledge[productID].isAvailable = false;
+            productsKnowledge[askForProduct].isAvailable = false;
         }
+            
+        staff.isBusy = false;
 
         isBusy = false;
         action = CustomerAction.none;
