@@ -9,6 +9,9 @@ public class CustomerController : AgentController
     public float budget;
     public LayerMask staffLayer;
 
+    [Header("Utility")]
+    float minUtility = 0.4f;
+
     [Header("Feelings")]
     public float maxBored = 10;
 
@@ -439,7 +442,6 @@ public class CustomerController : AgentController
             // Calculate utility
             float price = getProductPrice(product.onShelve.GetComponent<Shelve>());
             float utility = product.getUtility(price, productsManager.weightPref, productsManager.weightToBuy, productsManager.weightHasDiscount, productsManager.weightPlacement, productsManager.weightPlanogram);
-            float minUtility = 0.4f; // TEEEEEEEMP
 
             // Decide if this product should be picked up
             if (utility >= minUtility && price != -1)
@@ -494,7 +496,7 @@ public class CustomerController : AgentController
             levels[1] = new ShelveLevel(shelvePricesSorted[2], 1 - pref);
             levels[2] = new ShelveLevel(shelvePricesSorted[0], 0);
         }
-        else if (prefRadians > Mathf.PI*3 && prefRadians < Mathf.PI*4)
+        else if (prefRadians > Mathf.PI*3)
         {
             levels[0] = new ShelveLevel(shelvePricesSorted[2], pref);
             levels[1] = new ShelveLevel(shelvePricesSorted[1], 1 - pref);
@@ -518,7 +520,7 @@ public class CustomerController : AgentController
 
         Array.Sort<ShelveLevel>(levels, (x,y) => -x.shelveLevelPref.CompareTo(y.shelveLevelPref));
 
-        for (int i = 0; i < levels.Length; i++)
+            for (int i = 0; i < levels.Length; i++)
         {
             if (levels[i].shelveLevelPrice <= budget)
             {

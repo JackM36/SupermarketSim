@@ -30,7 +30,7 @@ public class ProductsManager : MonoBehaviour
 
     //TODO fix position and number of products in array
     public float[,] planogram = new float[3, 10] {
-        { 1.8f, 1f, 1f, 1.6f, 1.8f, 1.1f, 1.2f, 1.2f, 1.1f, 1.1f},//distance_entrance
+        { 1.8f, 2f, 2f, 1.6f, 1.8f, 1.1f, 1.2f, 1.2f, 1.1f, 1.1f},//distance_entrance
         { 1.6f, 1.3f, 1.3f, 1.7f, 1.6f, 1.5f, 1.5f, 1.4f, 1.1f, 1.4f},//distance_middle
         { 1.2f, 1.2f, 1.2f, 1.3f, 1.8f, 1.8f, 1.7f, 1.6f, 1.7f, 1.6f,},//distance_cashiers   
     };
